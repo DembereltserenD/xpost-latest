@@ -1,0 +1,60 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  body {
+    @apply bg-white dark:bg-gray-900;
+  }
+}
+
+/* Custom Light and Dark Theme Colors */
+
+.bg-light {
+    background-color: white;
+}
+
+.text-light {
+    color: black;
+}
+
+.bg-dark {
+    background-color: black;
+}
+
+.text-dark {
+    color: white;
+}
+
+/* Ensure text is visible in dark mode */
+.text-dark {
+    color: white;
+}
+
+/* Custom Gradient Backgrounds */
+
+.bg-gradient {
+    background: linear-gradient(90deg, rgba(0, 123, 255, 1) 0%, rgba(85, 0, 255, 1) 100%);
+}
+
+.bg-rainbow {
+    background: linear-gradient(90deg, rgba(255, 0, 0, 1) 0%, rgba(255, 128, 0, 1) 20%, rgba(255, 255, 0, 1) 40%, rgba(0, 128, 0, 1) 60%, rgba(0, 0, 255, 1) 80%, rgba(128, 0, 128, 1) 100%);
+}
+
+@layer components {
+  .btn-primary {
+    @apply bg-primary hover:bg-primary-dark text-white px-4 py-2 rounded-lg transition-colors;
+  }
+  
+  .btn-secondary {
+    @apply bg-gray-200 hover:bg-gray-300 dark:bg-gray-800 dark:hover:bg-gray-700 text-gray-900 dark:text-white px-4 py-2 rounded-lg transition-colors;
+  }
+
+  .card {
+    @apply bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6;
+  }
+
+  .input {
+    @apply bg-white dark:bg-gray-800 border border-gray-300 dark:border-gray-700 rounded-lg px-4 py-2 focus:ring-2 focus:ring-primary focus:border-transparent;
+  }
+}

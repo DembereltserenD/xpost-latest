@@ -1,0 +1,46 @@
+{
+  "compilerOptions": {
+    "target": "ESNext",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "jsx": "preserve",
+    "skipLibCheck": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "allowJs": true,
+    "noEmit": true,
+    "isolatedModules": true,
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "~/*": ["./*"],
+      "@/*": ["./*"],
+      "#imports": ["./.nuxt/imports.d.ts"],
+      "#app": ["./.nuxt/types/app.d.ts", "./types/nuxt.d.ts"]
+    },
+    "types": [
+      "node",
+      "@nuxtjs/i18n",
+      "@nuxt/image",
+      "@nuxtjs/color-mode",
+      "@nuxtjs/supabase",
+      "@types/node",
+      "vue-router"
+    ]
+  },
+  "include": [
+    "./**/*.ts",
+    "./**/*.d.ts",
+    "./**/*.tsx",
+    "./**/*.vue",
+    "./.nuxt/nuxt.d.ts",
+    "./.nuxt/imports.d.ts",
+    "./types/**/*.d.ts",
+    "./node_modules/@nuxt/schema/dist/index.d.ts"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
+}
