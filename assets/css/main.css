@@ -30,7 +30,11 @@
   --content-padding: 1rem;
   --header-height: 3.75rem;
   --ticker-height: 2.5rem;
-  
+
+  @media (max-width: 640px) {
+    --content-padding: 0.75rem;
+  }
+
   /* Typography variables */
   --font-size-base: 1rem;
   --line-height-base: 1.5;
@@ -103,8 +107,24 @@
 
 @layer components {
   .container-custom {
-    @apply w-full mx-auto px-4;
+    @apply w-full mx-auto relative;
     max-width: var(--max-width);
+    padding-left: var(--content-padding);
+    padding-right: var(--content-padding);
+  }
+
+  .container {
+    @apply w-full mx-auto relative;
+    max-width: var(--max-width);
+    padding-left: var(--content-padding);
+    padding-right: var(--content-padding);
+  }
+
+  .max-w-container {
+    @apply w-full mx-auto relative;
+    max-width: var(--max-width);
+    padding-left: var(--content-padding);
+    padding-right: var(--content-padding);
   }
 
   .button {

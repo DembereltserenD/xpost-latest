@@ -1,14 +1,15 @@
 <template>
   <div class="weather-tips">
     <h3 class="tips-title">
-      <LightbulbIcon class="w-5 h-5" />
+      <LightbulbIcon class="w-5 h-5 animate-pulse" />
       Цаг агаарын зөвлөмж
     </h3>
     <ul class="tips-list">
       <li 
         v-for="(tip, index) in tips" 
         :key="index"
-        class="tip-item"
+        class="tip-item animate-fade-in"
+        :style="{ animationDelay: `${index * 100}ms` }"
       >
         <div class="tip-icon">
           <component :is="getTipIcon(tip)" class="w-4 h-4" />
@@ -43,11 +44,11 @@ const getTipIcon = (tip: string) => {
 
 <style scoped>
 .weather-tips {
-  @apply bg-gray-700 rounded-lg p-4;
+  @apply bg-card text-card-foreground rounded-lg p-4 transition-all duration-300 hover:shadow-lg;
 }
 
 .tips-title {
-  @apply text-lg font-semibold mb-4 flex items-center gap-2 text-white;
+  @apply text-lg font-semibold mb-4 flex items-center gap-2 text-foreground;
 }
 
 .tips-list {
@@ -55,10 +56,28 @@ const getTipIcon = (tip: string) => {
 }
 
 .tip-item {
-  @apply flex items-center gap-3 text-gray-300;
+  @apply flex items-center gap-2 text-sm text-muted-foreground;
+  @apply bg-muted/50 rounded-lg p-3;
+  @apply transition-all duration-300;
+  @apply hover:bg-muted;
 }
 
 .tip-icon {
-  @apply text-yellow-400 flex-shrink-0;
+  @apply text-primary;
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.5s ease-out forwards;
 }
 </style>

@@ -1,6 +1,6 @@
 <template>
   <div class="ticker-container">
-    <div class="container">
+    <div class="container-custom">
       <div class="ticker-wrapper">
         <div class="ticker-content">
           <div 
@@ -99,13 +99,15 @@ onUnmounted(() => {
 
 <style scoped>
 .ticker-container {
-  @apply fixed top-0 left-0 right-0 h-[var(--ticker-height)] z-50;
+  @apply relative z-[60];
+  height: var(--ticker-height);
   @apply bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60;
   @apply border-b border-border shadow-sm;
 }
 
-.container {
-  @apply max-w-[1200px] mx-auto h-full px-4;
+.container-custom {
+  max-width: var(--max-width);
+  @apply mx-auto h-full px-4;
 }
 
 .ticker-wrapper {

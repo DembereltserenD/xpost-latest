@@ -121,46 +121,63 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { createClient } from '@supabase/supabase-js'
+import { useSupabaseClient } from '#imports'
 
-const config = useRuntimeConfig()
-const supabase = createClient(
-  config.public.supabaseUrl,
-  config.public.supabaseKey
-)
+interface Category {
+  id: string
+  name: string
+  description: string | null
+  news_count: number
+  created_at: string
+}
 
-const categories = ref([])
+const supabase = useSupabaseClient()
+const categories = ref<Category[]>([])
 const showModal = ref(false)
-const editingCategory = ref(null)
+const editingCategory = ref<Category | null>(null)
 const form = ref({
   name: '',
   description: ''
 })
+const loading = ref(false)
+const error = ref('')
 
 const fetchCategories = async () => {
+  loading.value = true
   try {
+    // First, fetch categories
     const { data: categoriesData, error: categoriesError } = await supabase
       .from('categories')
       .select('*')
-      .order('name')
-
+      .order('created_at', { ascending: false })
+    
     if (categoriesError) throw categoriesError
-
-    // Fetch news count for each category
+    
+    // Then, fetch news counts
     const { data: newsCountData, error: newsCountError } = await supabase
       .from('news')
-      .select('category_id, count')
-      .group('category_id')
+      .select('category_id')
 
     if (newsCountError) throw newsCountError
 
-    // Map news count to categories
+    // Count news for each category
+    const newsCountMap = (newsCountData || []).reduce<Record<string, number>>((acc, item) => {
+      if (item.category_id) {
+        acc[item.category_id] = (acc[item.category_id] || 0) + 1
+      }
+      return acc
+    }, {})
+
+    // Combine the data
     categories.value = categoriesData.map(category => ({
       ...category,
-      news_count: newsCountData.find(item => item.category_id === category.id)?.count || 0
+      news_count: newsCountMap[category.id] || 0
     }))
   } catch (err) {
     console.error('Error fetching categories:', err)
+    error.value = 'Failed to fetch categories'
+  } finally {
+    loading.value = false
   }
 }
 
@@ -173,11 +190,11 @@ const openCreateModal = () => {
   showModal.value = true
 }
 
-const editCategory = (category) => {
+const editCategory = (category: Category) => {
   editingCategory.value = category
   form.value = {
     name: category.name,
-    description: category.description
+    description: category.description || ''
   }
   showModal.value = true
 }
@@ -212,35 +229,29 @@ const handleSubmit = async () => {
   }
 }
 
-const handleDelete = async (id: number) => {
+const handleDelete = async (id: string) => {
   const category = categories.value.find(c => c.id === id)
+  if (!category) return
+  
   if (category.news_count > 0) {
     alert('Энэ ангилалд мэдээ байгаа тул устгах боломжгүй!')
     return
   }
 
-  if (!confirm('Энэ ангилалыг устгахдаа итгэлтэй байна уу?')) return
-
   try {
-    const { error } = await supabase
+    const { error: deleteError } = await supabase
       .from('categories')
       .delete()
       .eq('id', id)
 
-    if (error) throw error
+    if (deleteError) throw deleteError
 
-    fetchCategories()
+    categories.value = categories.value.filter(c => c.id !== id)
   } catch (err) {
     console.error('Error deleting category:', err)
+    error.value = 'Failed to delete category'
   }
 }
 
-onMounted(() => {
-  fetchCategories()
-})
-
-definePageMeta({
-  layout: 'admin',
-  middleware: ['auth', 'admin']
-})
+onMounted(fetchCategories)
 </script>

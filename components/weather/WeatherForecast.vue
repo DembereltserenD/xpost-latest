@@ -1,30 +1,28 @@
 <template>
-  <div class="forecast-section">
-    <h3 class="forecast-title">
-      <Calendar class="w-5 h-5" />
-      5 хоногийн урьдчилсан мэдээ
-    </h3>
-    <div class="forecast-grid">
+  <div class="mb-8">
+    <h3 class="text-lg font-medium text-gray-800 dark:text-gray-300 mb-4">5 хоногийн урьдчилсан мэдээ</h3>
+    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
       <div 
         v-for="day in forecast" 
-        :key="day.date" 
-        class="forecast-card"
+        :key="day.date"
+        class="bg-gray-900/50 dark:bg-gray-800/50 rounded-lg p-4"
       >
-        <div class="forecast-date">{{ formatDate(day.date) }}</div>
-        <WeatherIcon :phenoId="day.phenoIdDay" class="forecast-icon" />
-        <div class="forecast-temps">
-          <div class="temp-day">{{ day.temperatureDay }}°C</div>
-          <div class="temp-night">{{ day.temperatureNight }}°C</div>
-        </div>
-        <div class="forecast-pheno">{{ day.phenoDay }}</div>
-        <div class="forecast-details">
-          <div class="detail-item">
-            <Wind class="w-4 h-4" />
-            {{ day.windDay }} м/с
+        <div class="text-center">
+          <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+            {{ formatDate(new Date(day.date)) }}
           </div>
-          <div class="detail-item">
-            <CloudRain class="w-4 h-4" />
-            {{ day.Percentage_Precipitation_Day }}%
+          <WeatherIcon :pheno="day.phenoDay" class="w-16 h-16 mx-auto mb-2" />
+          <div class="text-2xl font-bold text-gray-900 dark:text-white mb-2">
+            {{ day.temperatureDay }}°C
+          </div>
+          <div class="text-lg text-gray-700 dark:text-gray-300 mb-2">
+            {{ day.temperatureNight }}°C
+          </div>
+          <div class="text-sm text-gray-600 dark:text-gray-400 mb-2">
+            {{ day.phenoDay }}
+          </div>
+          <div class="text-sm text-gray-600 dark:text-gray-400">
+            {{ day.windDay }} м/с
           </div>
         </div>
       </div>
@@ -33,81 +31,35 @@
 </template>
 
 <script setup lang="ts">
-import { Calendar, Wind, CloudRain } from 'lucide-vue-next'
-import WeatherIcon from '../WeatherIcon.vue'
+import WeatherIcon from './WeatherIcon.vue'
+
+interface ForecastDay {
+  date: string
+  temperatureDay: number
+  temperatureNight: number
+  phenoDay: string
+  phenoNight: string
+  windDay: number
+  windNight: number
+}
 
 const props = defineProps<{
-  forecast: Array<{
-    date: string
-    temperatureDay: number
-    temperatureNight: number
-    phenoIdDay: string
-    phenoDay: string
-    windDay: number
-    Percentage_Precipitation_Day: number
-  }>
+  forecast: ForecastDay[]
 }>()
 
 const monthNames = [
-  'нэгдүгээр', 'хоёрдугаар', 'гуравдугаар', 'дөрөвдүгээр',
-  'тавдугаар', 'зургадугаар', 'долдугаар', 'наймдугаар',
-  'есдүгээр', 'аравдугаар', 'арван нэгдүгээр', 'арван хоёрдугаар'
+  'Нэгдүгээр', 'Хоёрдугаар', 'Гуравдугаар', 'Дөрөвдүгээр',
+  'Тавдугаар', 'Зургадугаар', 'Долдугаар', 'Наймдугаар',
+  'Есдүгээр', 'Аравдугаар', 'Арван нэгдүгээр', 'Арван хоёрдугаар'
 ]
 
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString)
-  const day = date.getDate()
+const formatDate = (date: Date) => {
   const month = monthNames[date.getMonth()]
+  const day = date.getDate()
   return `${month} сарын ${day}`
 }
 </script>
 
 <style scoped>
-.forecast-section {
-  @apply mb-8;
-}
-
-.forecast-title {
-  @apply text-xl font-semibold mb-6 text-white flex items-center gap-2;
-}
-
-.forecast-grid {
-  @apply grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4;
-}
-
-.forecast-card {
-  @apply bg-gray-700 p-4 rounded-lg text-center transition-transform duration-300 hover:-translate-y-1;
-}
-
-.forecast-date {
-  @apply text-sm text-gray-400 mb-2;
-}
-
-.forecast-icon {
-  @apply w-16 h-16 mx-auto mb-4;
-}
-
-.forecast-temps {
-  @apply mb-2;
-}
-
-.temp-day {
-  @apply text-2xl font-bold text-white mb-1;
-}
-
-.temp-night {
-  @apply text-lg text-gray-300;
-}
-
-.forecast-pheno {
-  @apply text-sm text-gray-300 mb-3;
-}
-
-.forecast-details {
-  @apply text-sm text-gray-400 space-y-1;
-}
-
-.detail-item {
-  @apply flex items-center justify-center gap-2;
-}
+/* Add styles here if needed */
 </style>

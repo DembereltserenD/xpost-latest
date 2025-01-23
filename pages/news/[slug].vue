@@ -1,5 +1,5 @@
 <template>
-  <div class="article-page">
+  <div class="container-custom py-8">
     <article v-if="article" class="article-content">
       <h1 class="text-3xl font-bold mb-4">{{ article.title }}</h1>
       <div class="article-meta mb-4">
@@ -45,10 +45,6 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-.article-page {
-  @apply max-w-4xl mx-auto px-4 py-8;
-}
-
 .article-content {
   @apply bg-white dark:bg-gray-800 rounded-lg shadow-lg p-6;
 }

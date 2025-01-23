@@ -114,12 +114,12 @@
                 class="flex items-center space-x-3 focus:outline-none"
               >
                 <img 
-                  :src="user?.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff'" 
+                  :src="getAvatarUrl"
                   class="w-8 h-8 rounded-full"
                   alt="Profile"
                 >
                 <span class="text-sm font-medium text-gray-700 dark:text-gray-200">
-                  {{ user?.email }}
+                  {{ getUserEmail }}
                 </span>
               </button>
 
@@ -151,9 +151,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, computed, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
+import { useColorMode } from '#imports'
+import { useRuntimeConfig } from '#imports'
 import { createClient } from '@supabase/supabase-js'
-import { useRoute, useColorMode } from '#imports'
+import type { User } from '@supabase/supabase-js'
 
 const config = useRuntimeConfig()
 const supabase = createClient(
@@ -165,7 +168,15 @@ const route = useRoute()
 const colorMode = useColorMode()
 const isSidebarOpen = ref(false)
 const isProfileOpen = ref(false)
-const user = ref(null)
+const user = ref<User | null>(null)
+
+const getAvatarUrl = computed(() => {
+  return user.value?.user_metadata?.avatar_url || 'https://ui-avatars.com/api/?name=Admin&background=0D8ABC&color=fff'
+})
+
+const getUserEmail = computed(() => {
+  return user.value?.email || 'Admin'
+})
 
 const toggleTheme = () => {
   colorMode.preference = colorMode.value === 'dark' ? 'light' : 'dark'
@@ -183,7 +194,7 @@ const handleLogout = async () => {
 
 onMounted(async () => {
   const { data: { session } } = await supabase.auth.getSession()
-  if (session) {
+  if (session?.user) {
     user.value = session.user
   }
 })

@@ -73,38 +73,30 @@ const stats = computed(() => [
 
 <style scoped>
 .stats-grid {
-  @apply grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-4;
+  @apply grid grid-cols-2 sm:grid-cols-4 gap-4;
 }
 
 .stat-card {
-  @apply bg-gray-700 p-1 rounded-lg flex items-center gap-3;
+  @apply bg-card text-card-foreground rounded-lg p-4;
+  @apply flex items-center gap-3;
+  @apply transition-all duration-300;
+  @apply hover:shadow-md hover:scale-105;
+  @apply border border-border;
 }
 
 .stat-icon {
-  @apply text-blue-400;
+  @apply text-primary;
 }
 
 .stat-content {
-  @apply flex-1;
+  @apply flex flex-col;
 }
 
 .stat-label {
-  @apply text-sm text-gray-300;
+  @apply text-xs text-muted-foreground;
 }
 
 .stat-value {
-  @apply text-lg font-semibold text-white;
-}
-
-@media (max-width: 768px) {
-  .stats-grid {
-    @apply grid-cols-2;
-  }
-}
-
-@media (max-width: 480px) {
-  .stats-grid {
-    @apply grid-cols-1;
-  }
+  @apply text-sm font-medium text-foreground;
 }
 </style>

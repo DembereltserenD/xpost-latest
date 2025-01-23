@@ -1,6 +1,11 @@
 <template>
   <div class="info-item">
-    <NuxtLink to="/weather" class="info-link" @click="$emit('close')">
+    <NuxtLink 
+      to="/weather" 
+      class="info-link" 
+      :class="{ 'router-link-active': $route.path === '/weather' }"
+      @click="$emit('close')"
+    >
       <Thermometer class="info-icon" />
       <template v-if="weatherStore.isLoading">
         <span class="loading-text">Уншиж байна...</span>
@@ -20,7 +25,9 @@
 <script setup lang="ts">
 import { Thermometer } from 'lucide-vue-next'
 import { useWeatherStore } from '~/composables/useWeatherStore'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
 const weatherStore = useWeatherStore()
 
 onMounted(async () => {
@@ -35,8 +42,9 @@ onMounted(async () => {
 
 .info-link {
   @apply flex items-center gap-2 px-3 py-2 rounded-md text-sm;
-  @apply text-foreground/80 hover:text-foreground hover:bg-accent;
+  @apply text-foreground/80 hover:text-foreground;
   @apply transition-colors duration-200;
+  @apply hover:bg-accent/50;
 }
 
 .info-icon {
@@ -57,5 +65,14 @@ onMounted(async () => {
 
 .loading-text {
   @apply text-sm text-muted-foreground animate-pulse;
+}
+
+.router-link-active {
+  @apply bg-accent/30 text-foreground;
+}
+
+/* Remove active state styles when not on weather page */
+.info-link:not(.router-link-active):hover {
+  @apply bg-accent/50;
 }
 </style>

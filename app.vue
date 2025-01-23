@@ -1,17 +1,17 @@
 <template>
   <NuxtLayout>
-    <div :class="['app-wrapper', colorMode.value]">
+    <div :class="['app-wrapper', colorMode.value, { 'menu-open': isMobileMenuOpen }]">
       <ClientOnly>
         <template v-if="!isAdminOrAuthRoute">
           <Ticker />
-          <Header />
-          <main class="main-content">
+          <Header @menu-toggle="handleMenuToggle" />
+          <main class="main-content" :class="{ 'hidden': isMobileMenuOpen }">
             <div class="container-custom">
               <NuxtPage />
             </div>
           </main>
-          <Footer />
-          <StickySocial />
+          <Footer :class="{ 'hidden': isMobileMenuOpen }" />
+          <StickySocial v-if="!isMobileMenuOpen" />
         </template>
         <template v-else>
           <NuxtPage />
@@ -22,16 +22,34 @@
 </template>
 
 <script setup lang="ts">
-import { watch, computed } from 'vue'
-import { useColorMode, useRoute } from '#imports'
+import { watch, computed, ref } from 'vue'
+import { useColorMode } from '#imports'
+import { useRoute } from 'vue-router'
+import { useNuxtApp } from '#app'
 import StickySocial from '~/components/StickySocial.vue'
 
+const nuxtApp = useNuxtApp()
 const colorMode = useColorMode()
 const route = useRoute()
+const isMobileMenuOpen = ref(false)
 
+// Check if current route is an auth route
 const isAdminOrAuthRoute = computed(() => {
-  return route.path.startsWith('/admin') || route.path.startsWith('/auth')
+  const path = route.path
+  return path.startsWith('/admin') || 
+         path === '/login' || 
+         path === '/auth/login' || 
+         path === '/auth/register' ||
+         path === '/auth/forgot-password' ||
+         path === '/auth/reset-password'
 })
+
+const handleMenuToggle = (isOpen: boolean) => {
+  isMobileMenuOpen.value = isOpen;
+  if (process.client) {
+    document.body.style.overflow = isOpen ? 'hidden' : '';
+  }
+}
 
 // Watch for color mode changes and update HTML class
 watch(() => colorMode.value, (newValue) => {
@@ -44,30 +62,56 @@ watch(() => colorMode.value, (newValue) => {
 
 <style>
 :root {
-  --header-height: 60px;
-  --ticker-height: 32px;
   --max-width: 1200px;
+  --header-height: 3.75rem;
+  --ticker-height: 2.5rem;
+  --content-padding: 1rem;
+
+  @media (max-width: 640px) {
+    --content-padding: 0.75rem;
+  }
+}
+
+/* Reset default margins */
+body {
+  margin: 0;
+  padding: 0;
 }
 
 .app-wrapper {
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
+  @apply min-h-screen flex flex-col;
+  @apply bg-background text-foreground;
+  margin: 0;
+  padding: 0;
+  position: relative;
   background-color: hsl(var(--background));
   color: hsl(var(--foreground));
 }
 
+.app-wrapper.menu-open {
+  height: 100vh;
+  overflow: hidden;
+}
+
 .main-content {
   flex: 1;
-  padding-top: calc(var(--header-height) + var(--ticker-height) - 3.2rem);
-  margin-top: 0;
 }
 
 .container-custom {
+  width: 100%;
   max-width: var(--max-width);
   margin: 0 auto;
-  padding: 0 1rem;
+  padding-left: var(--content-padding);
+  padding-right: var(--content-padding);
+}
+
+/* Utility class for max-width container */
+.max-w-container {
   width: 100%;
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding-left: var(--content-padding);
+  padding-right: var(--content-padding);
 }
 
 /* Page Transitions */
@@ -86,13 +130,6 @@ watch(() => colorMode.value, (newValue) => {
   .page-enter-active,
   .page-leave-active {
     transition: none;
-  }
-}
-
-@media (max-width: 768px) {
-  :root {
-    --header-height: 60px;
-    --ticker-height: 32px;
   }
 }
 </style>

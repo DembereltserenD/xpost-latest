@@ -1,207 +1,245 @@
 import { defineStore } from 'pinia'
-import { ref, computed } from 'vue'
+import { ref } from 'vue'
 import { createClient } from '@supabase/supabase-js'
 import { useRuntimeConfig } from '#imports'
 
 export interface Article {
-  id: number
+  id: string
   title: string
+  slug: string
   content: string
-  excerpt?: string | null
-  category: string
+  excerpt: string
+  summary?: string
+  featured_image: string | null
+  category_id: string
   created_at: string
-  image?: string | null
-  is_featured: boolean
-  shares: number
-  comments: number
+  published_at: string
+  updated_at: string
   likes: number
-  liked?: boolean
-  watermark?: {
-    enabled: boolean
-    position: 'top-right' | 'bottom-left'
-  } | null
-  description?: string;
-  slug: string;
+  comments: number
+  liked: boolean
+  category?: {
+    id: string
+    name: string
+    slug: string
+  }
 }
 
-export const useNewsStore = defineStore('news', () => {
-  const config = useRuntimeConfig()
-  console.log('Supabase URL:', config.public.supabaseUrl)
-  console.log('Supabase Key exists:', !!config.public.supabaseKey)
-  
-  const supabase = createClient(
-    config.public.supabaseUrl,
-    config.public.supabaseKey
-  )
+export const useNewsStore = defineStore('news', {
+  state: () => {
+    const config = useRuntimeConfig()
+    const supabase = createClient(
+      config.public.supabaseUrl,
+      config.public.supabaseKey
+    )
 
-  const articles = ref<Article[]>([])
-  const currentPage = ref(1)
-  const itemsPerPage = ref(10)
-  const activeCategory = ref('all')
-  const isLoading = ref(false)
-  const error = ref<string | null>(null)
-  const totalArticles = ref(0)
+    return {
+      latestArticles: [] as Article[],
+      featuredArticles: [] as Article[],
+      loading: false,
+      error: null as string | null,
+      currentPage: 1,
+      itemsPerPage: 9,
+      loadMoreCount: 6,
+      hasMore: true,
+      initialized: false,
+      supabase,
+      config
+    }
+  },
 
-  const hasMoreArticles = computed(() => {
-    return articles.value.length < totalArticles.value
-  })
-
-  const featuredArticles = computed(() => {
-    return articles.value.filter(article => article.is_featured)
-  })
-
-  const paginatedArticles = computed(() => {
-    const start = (currentPage.value - 1) * itemsPerPage.value
-    const end = start + itemsPerPage.value
-    return filteredArticles.value.slice(start, end)
-  })
-
-  const fetchArticles = async (page: number = 1, limit: number = 10) => {
-    console.log('Starting fetchArticles, page:', page, 'limit:', limit)
-    isLoading.value = true
-    error.value = null
-    
-    try {
-      console.log('Fetching articles from Supabase...')
-      const { data, error: fetchError, count } = await supabase
-        .from('news')
-        .select('*', { count: 'exact' })
-        .order('created_at', { ascending: false })
-        .range((page - 1) * limit, page * limit - 1)
-
-      if (fetchError) {
-        console.error('Supabase error:', fetchError)
-        throw fetchError
+  actions: {
+    async init() {
+      if (this.initialized) return
+      if (process.client) {
+        this.initialized = true
+        await this.fetchLatestArticles()
+        await this.fetchFeaturedArticles()
       }
+    },
 
-      console.log('Fetched articles count:', data?.length)
-      console.log('Total count:', count)
+    async fetchLatestArticles() {
+      if (this.loading) return
+      this.loading = true
+      try {
+        const startIndex = this.currentPage === 1 ? 0 : 9 + ((this.currentPage - 2) * this.loadMoreCount)
+        const endIndex = this.currentPage === 1 ? 8 : startIndex + this.loadMoreCount - 1
 
-      if (page === 1) {
-        articles.value = data || []
-      } else {
-        articles.value = [...articles.value, ...(data || [])]
+        const { data, error } = await this.supabase
+          .from('news')
+          .select('*, category:categories(*)')
+          .eq('is_featured', false)
+          .eq('is_published', true)
+          .order('published_at', { ascending: false })
+          .range(startIndex, endIndex)
+
+        if (error) throw error
+        
+        const processedArticles = data.map((article: any) => ({
+          id: article.id,
+          title: article.title,
+          slug: article.slug,
+          content: article.content,
+          excerpt: article.excerpt || '',
+          summary: article.summary,
+          category_id: article.category_id,
+          created_at: article.created_at,
+          published_at: article.published_at,
+          updated_at: article.updated_at,
+          likes: 0,
+          comments: 0,
+          liked: false,
+          category: article.category,
+          featured_image: article.featured_image?.startsWith('data:') ? 
+            article.featured_image : 
+            article.featured_image ? 
+              `${this.config.public.supabaseUrl}/storage/v1/object/public/news/${article.featured_image}` : 
+              '/placeholder-image.svg'
+        }))
+
+        if (this.currentPage === 1) {
+          this.latestArticles = processedArticles
+        } else {
+          this.latestArticles.push(...processedArticles)
+        }
+
+        this.hasMore = data.length === (this.currentPage === 1 ? 9 : this.loadMoreCount)
+      } catch (error) {
+        console.error('Error fetching latest articles:', error)
+      } finally {
+        this.loading = false
       }
+    },
 
-      if (count !== null) {
-        totalArticles.value = count
+    async fetchFeaturedArticles() {
+      try {
+        const { data, error } = await this.supabase
+          .from('news')
+          .select('*, category:categories(*)')
+          .eq('is_featured', true)
+          .eq('is_published', true)
+          .order('published_at', { ascending: false })
+          .limit(4)
+
+        if (error) throw error
+
+        this.featuredArticles = data.map((article: any) => ({
+          id: article.id,
+          title: article.title,
+          slug: article.slug,
+          content: article.content,
+          excerpt: article.excerpt || '',
+          summary: article.summary,
+          category_id: article.category_id,
+          created_at: article.created_at,
+          published_at: article.published_at,
+          updated_at: article.updated_at,
+          likes: 0,
+          comments: 0,
+          liked: false,
+          category: article.category,
+          featured_image: article.featured_image?.startsWith('data:') ? 
+            article.featured_image : 
+            article.featured_image ? 
+              `${this.config.public.supabaseUrl}/storage/v1/object/public/news/${article.featured_image}` : 
+              '/placeholder-image.svg'
+        }))
+      } catch (error) {
+        console.error('Error fetching featured articles:', error)
       }
-    } catch (err) {
-      console.error('Error in fetchArticles:', err)
-      error.value = 'Failed to fetch articles'
-    } finally {
-      isLoading.value = false
-      console.log('Fetch complete, isLoading:', isLoading.value)
+    },
+
+    async getArticleBySlug(slug: string) {
+      try {
+        const { data: article, error } = await this.supabase
+          .from('news')
+          .select('*, category:categories(*)')
+          .eq('slug', slug)
+          .single()
+
+        if (error) throw error
+
+        // Increment view count
+        await this.incrementViews(article.id)
+
+        return {
+          id: article.id,
+          title: article.title,
+          slug: article.slug,
+          content: article.content,
+          excerpt: article.excerpt || '',
+          summary: article.summary,
+          category_id: article.category_id,
+          created_at: article.created_at,
+          published_at: article.published_at,
+          updated_at: article.updated_at,
+          likes: 0,
+          comments: 0,
+          liked: false,
+          category: article.category,
+          featured_image: article.featured_image?.startsWith('data:') ? 
+            article.featured_image : 
+            article.featured_image ? 
+              `${this.config.public.supabaseUrl}/storage/v1/object/public/news/${article.featured_image}` : 
+              '/placeholder-image.svg'
+        }
+      } catch (error) {
+        console.error('Error fetching article:', error)
+        throw error
+      }
+    },
+
+    async incrementViews(articleId: string) {
+      try {
+        const { error } = await this.supabase.rpc('increment_views', { article_id: articleId })
+        if (error) throw error
+      } catch (error) {
+        console.error('Error incrementing views:', error)
+      }
+    },
+
+    async loadMore() {
+      this.currentPage++
+      await this.fetchLatestArticles()
+    },
+
+    async toggleLike(article: Article) {
+      article.liked = !article.liked
+      article.likes = (article.likes || 0) + (article.liked ? 1 : -1)
+      // TODO: Implement API call to update like status
+    },
+
+    getTimeAgo(dateString: string): string {
+      const date = new Date(dateString)
+      const now = new Date('2025-01-10T17:32:24+08:00')
+      const seconds = Math.floor((now.getTime() - date.getTime()) / 1000)
+      
+      let interval = Math.floor(seconds / 31536000)
+      if (interval >= 1) {
+        return `${interval} жилийн өмнө`
+      }
+      
+      interval = Math.floor(seconds / 2592000)
+      if (interval >= 1) {
+        return `${interval} сарын өмнө`
+      }
+      
+      interval = Math.floor(seconds / 86400)
+      if (interval >= 1) {
+        return `${interval} өдрийн өмнө`
+      }
+      
+      interval = Math.floor(seconds / 3600)
+      if (interval >= 1) {
+        return `${interval} цагийн өмнө`
+      }
+      
+      interval = Math.floor(seconds / 60)
+      if (interval >= 1) {
+        return `${interval} минутын өмнө`
+      }
+      
+      return 'Саяхан'
     }
-  }
-
-  const setCurrentPage = (page: number) => {
-    currentPage.value = page
-  }
-
-  const setActiveCategory = (category: string) => {
-    activeCategory.value = category
-    currentPage.value = 1
-  }
-
-  const filteredArticles = computed(() => {
-    if (activeCategory.value === 'all') {
-      return articles.value
-    }
-    return articles.value.filter(article => article.category === activeCategory.value)
-  })
-
-  const getTimeAgo = (date: string) => {
-    const now = new Date()
-    const past = new Date(date)
-    const diffTime = Math.abs(now.getTime() - past.getTime())
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24))
-    
-    if (diffDays === 1) return 'Өчигдөр'
-    if (diffDays < 7) return `${diffDays} өдрийн өмнө`
-    if (diffDays < 30) {
-      const weeks = Math.floor(diffDays / 7)
-      return `${weeks} 7 хоногийн өмнө`
-    }
-    if (diffDays < 365) {
-      const months = Math.floor(diffDays / 30)
-      return `${months} сарын өмнө`
-    }
-    const years = Math.floor(diffDays / 365)
-    return `${years} жилийн өмнө`
-  }
-
-  const toggleLike = async (article: Article) => {
-    try {
-      const newLikeStatus = !article.liked
-      const newLikesCount = article.likes + (newLikeStatus ? 1 : -1)
-
-      const { error: updateError } = await supabase
-        .from('news')
-        .update({ 
-          likes: newLikesCount,
-          liked: newLikeStatus 
-        })
-        .eq('id', article.id)
-
-      if (updateError) throw updateError
-
-      // Update local state
-      article.liked = newLikeStatus
-      article.likes = newLikesCount
-    } catch (err) {
-      console.error('Error toggling like:', err)
-      throw err
-    }
-  }
-
-  const loadMoreArticles = async () => {
-    const nextPage = currentPage.value + 1
-    await fetchArticles(nextPage)
-    currentPage.value = nextPage
-  }
-
-  const getArticleBySlug = async (slug: string) => {
-    isLoading.value = true
-    error.value = null
-    
-    try {
-      const { data, error: fetchError } = await supabase
-        .from('news')
-        .select('*')
-        .eq('slug', slug)
-        .single()
-
-      if (fetchError) throw fetchError
-
-      return data
-    } catch (err) {
-      console.error('Error fetching article:', err)
-      error.value = 'Failed to fetch article'
-      return null
-    } finally {
-      isLoading.value = false
-    }
-  }
-
-  return {
-    articles,
-    currentPage,
-    itemsPerPage,
-    isLoading,
-    error,
-    activeCategory,
-    totalArticles,
-    hasMoreArticles,
-    featuredArticles,
-    paginatedArticles,
-    fetchArticles,
-    setCurrentPage,
-    setActiveCategory,
-    getTimeAgo,
-    toggleLike,
-    loadMoreArticles,
-    getArticleBySlug,
-    filteredArticles
   }
 })

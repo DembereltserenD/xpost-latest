@@ -30,9 +30,11 @@
         <div class="relative">
           <NuxtLink :to="`/news/${article.slug}`">
             <img 
-              :src="article.image || '/placeholder-image.svg'" 
+              :src="article.featured_image || '/placeholder-image.svg'" 
               :alt="article.title"
               class="w-full h-64 object-cover"
+              loading="lazy"
+              @error="handleImageError"
             />
             <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-200">
               <span class="text-white font-medium">Цааш унших</span>
@@ -84,55 +86,69 @@
     <div v-if="hasMoreArticles" class="text-center mt-8">
       <button
         @click="$emit('load-more')"
-        class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 transition-colors duration-200"
+        :disabled="isLoading"
+        class="bg-red-500 text-white px-6 py-2 rounded-lg hover:bg-red-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-200"
       >
-        Load More
+        <span v-if="!isLoading">Цааш үзэх</span>
+        <span v-else>Уншиж байна...</span>
       </button>
     </div>
 
     <!-- End Message -->
-    <p v-if="!isLoading && !error && !hasMoreArticles" class="end-message">
-      You've reached the end of the articles
+    <p v-if="!isLoading && !error && !hasMoreArticles" class="text-center text-gray-500 dark:text-gray-400 mt-8">
+      Бүх мэдээг харууллаа
     </p>
   </div>
 </template>
 
 <script setup lang="ts">
-import { Heart, MessageCircle, Share2, Clock } from 'lucide-vue-next';
-import { useNewsStore } from '~/stores/news';
-import type { Article } from '~/stores/news';
+import { Heart, MessageCircle, Share2, Clock } from 'lucide-vue-next'
+import { useNewsStore } from '~/stores/news'
+import type { Article } from '~/stores/news'
 
-const newsStore = useNewsStore();
-
-defineProps<{
-  articles: Article[];
-  isLoading?: boolean;
-  error?: string;
-  hasMoreArticles?: boolean;
+const props = defineProps<{
+  articles: Article[]
+  isLoading?: boolean
+  error?: string | null
+  hasMoreArticles?: boolean
 }>()
 
-const toggleLike = (article: Article) => {
-  newsStore.toggleLike(article);
-};
+const newsStore = useNewsStore()
+const defaultImage = 'https://images.unsplash.com/photo-1623066798929-946425dbe1b0'
 
-const shareArticle = (article: Article) => {
-  if (navigator.share) {
-    navigator.share({
-      title: article.title,
-      text: article.excerpt || '',
-      url: window.location.origin + '/news/' + article.slug
-    }).catch((error) => console.log('Error sharing:', error));
-  } else {
-    const url = window.location.origin + '/news/' + article.slug;
-    navigator.clipboard.writeText(url)
-      .then(() => alert('Link copied to clipboard!'))
-      .catch((error) => console.log('Error copying to clipboard:', error));
+const handleImageError = (e: Event) => {
+  const img = e.target as HTMLImageElement
+  if (img.src !== defaultImage) {
+    img.src = defaultImage
   }
-};
+}
+
+const toggleLike = (article: Article) => {
+  newsStore.toggleLike(article)
+}
+
+const shareArticle = async (article: Article) => {
+  if (navigator.share) {
+    try {
+      await navigator.share({
+        title: article.title,
+        text: article.excerpt,
+        url: window.location.origin + '/news/' + article.slug
+      })
+    } catch (err) {
+      console.error('Error sharing:', err)
+    }
+  } else {
+    // Fallback for browsers that don't support Web Share API
+    const url = window.location.origin + '/news/' + article.slug
+    navigator.clipboard.writeText(url)
+    // You might want to show a toast notification here
+  }
+}
 
 const formatDate = (dateString: string): string => {
-  return newsStore.getTimeAgo(dateString);
-};
+  return newsStore.getTimeAgo(dateString)
+}
 
 defineEmits<{
   (e: 'load-more'): void

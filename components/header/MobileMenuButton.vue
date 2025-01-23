@@ -1,69 +1,63 @@
 <template>
-  <button 
-    class="menu-button" 
-    @click="$emit('click')" 
+  <button
+    class="mobile-menu-button flex lg:hidden items-center justify-center p-2 hover:bg-accent/10 rounded-md"
     :class="{ 'is-active': isActive }"
-    aria-label="Toggle menu"
+    @click="$emit('click')"
   >
     <div class="hamburger-lines">
-      <span class="line line1"></span>
-      <span class="line line2"></span>
-      <span class="line line3"></span>
+      <span class="hamburger-line line1"></span>
+      <span class="hamburger-line line2"></span>
+      <span class="hamburger-line line3"></span>
     </div>
   </button>
-  <InfoLinks v-if="isActive" @close="$emit('close')" />
 </template>
 
 <script setup lang="ts">
-import InfoLinks from './InfoLinks.vue'
-
-defineProps<{
+const props = defineProps<{
   isActive: boolean
 }>()
+
+defineEmits(['click'])
 </script>
 
 <style scoped>
-.menu-button {
-  @apply lg:hidden flex items-center justify-center;
-  @apply absolute right-4 top-1/2 -translate-y-1/2;
-  @apply hover:bg-accent/10 rounded-md;
-  width: 40px;
-  height: 40px;
+.mobile-menu-button {
+  position: relative;
+  width: 48px;
+  height: 48px;
   z-index: 60;
 }
 
 .hamburger-lines {
-  width: 18px;
-  height: 14px;
+  width: 24px;
+  height: 18px;
   position: relative;
   display: flex;
   flex-direction: column;
   justify-content: space-between;
 }
 
-.line {
+.hamburger-line {
   display: block;
-  height: 1.5px;
+  height: 2.5px;
   width: 100%;
-  @apply bg-black dark:bg-white;
-  transition: all 0.25s ease;
+  background-color: currentColor;
+  transition: transform 0.3s ease-in-out, opacity 0.2s ease-in-out;
   transform-origin: 0% 50%;
 }
 
-.menu-button.is-active {
-  .line1 {
-    transform: rotate(45deg);
-    width: 19px;
-  }
-  
-  .line2 {
-    transform: scaleX(0);
-    opacity: 0;
-  }
-  
-  .line3 {
-    transform: rotate(-45deg);
-    width: 19px;
-  }
+.mobile-menu-button.is-active .line1 {
+  transform: rotate(45deg) translate(1px, -1px);
+  width: 26px;
+}
+
+.mobile-menu-button.is-active .line2 {
+  transform: scaleX(0);
+  opacity: 0;
+}
+
+.mobile-menu-button.is-active .line3 {
+  transform: rotate(-45deg) translate(1px, 1px);
+  width: 26px;
 }
 </style>

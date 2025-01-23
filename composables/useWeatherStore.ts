@@ -89,16 +89,12 @@ export const useWeatherStore = defineStore('weather', () => {
         throw new Error('Цаг агаарын мэдээлэл хоосон байна')
       }
 
-      // Debug log to check the raw data
-      console.log('Raw forecast data:', xmlDoc.querySelector('forecast5day')?.innerHTML)
-
       allCityWeather.value = Array.from(forecasts).map(forecast => {
         const city = forecast.querySelector('city')?.textContent || ''
         const province = forecast.querySelector('province')?.textContent || ''
         
         // Get all data elements
         const dataElements = Array.from(forecast.querySelectorAll('data'))
-        console.log(`Found ${dataElements.length} days of data for ${city}`)
         
         // Create today's data from current weather
         const today = new Date()

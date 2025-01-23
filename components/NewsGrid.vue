@@ -1,159 +1,72 @@
 <template>
-  <section class="news-grid" aria-label="News articles">
-    <div class="container-custom">
-      <div v-if="error" class="text-red-500 text-center mb-4" role="alert">
-        {{ error }}
-      </div>
-
-      <div v-if="newsStore.isLoading && displayedArticles.length === 0" class="grid gap-4 md:grid-cols-2">
-        <SkeletonLoader v-for="i in 6" :key="`initial-skeleton-${i}`" />
-      </div>
-
-      <TransitionGroup 
-        name="fade" 
-        tag="div" 
-        class="grid gap-6 grid-cols-1 md:grid-cols-2"
-        v-else
-      >
-        <article
-          v-for="article in displayedArticles"
-          :key="article.id"
-          class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden group hover:scale-[1.02] transition-all duration-200"
-        >
-          <div class="relative">
-            <NuxtLink :to="`/news/${article.slug}`">
-              <img 
-                :src="article.image || '/placeholder-image.svg'" 
-                :alt="article.title"
-                class="w-full h-80 object-cover"
-              />
-              <div class="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all duration-200">
-                <span class="text-white font-medium">Цааш унших</span>
-              </div>
-            </NuxtLink>
-          </div>
-
-          <div class="p-6">
-            <h2 class="font-bold text-2xl text-gray-900 dark:text-white mb-2">
-              <NuxtLink :to="`/news/${article.slug}`" class="hover:text-red-500 transition-colors duration-200">
+  <div class="news-grid">
+    <div v-if="newsStore.latestArticles.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      <div v-for="article in newsStore.latestArticles" :key="article.id" class="bg-gray-800 rounded-lg overflow-hidden">
+        <NuxtLink :to="`/news/${article.slug}`" class="block">
+          <div class="relative h-[200px] sm:h-[250px] lg:h-[300px]">
+            <img 
+              :src="article.featured_image" 
+              :alt="article.title" 
+              class="w-full h-full object-cover"
+              loading="lazy"
+              @error="handleImageError"
+            />
+            <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40"></div>
+            <div v-if="article.category?.name" class="absolute top-3 left-3">
+              <span class="px-2 py-0.5 text-xs font-medium bg-red-500 text-white rounded-full">
+                {{ article.category?.name }}
+              </span>
+            </div>
+            <div class="absolute bottom-0 left-0 right-0 p-3 md:p-4">
+              <h3 class="text-base md:text-lg font-semibold text-white line-clamp-2">
                 {{ article.title }}
-              </NuxtLink>
-            </h2>
-
-            <p class="text-gray-600 dark:text-gray-300 text-lg mb-4 line-clamp-2">
-              {{ article.excerpt }}
-            </p>
-
-            <div class="flex items-center gap-2 mb-2">
-              <span class="bg-red-500 text-white text-xs px-2 py-1 rounded">{{ article.category }}</span>
-              <time class="text-sm text-gray-500 dark:text-gray-400 flex items-center">
-                <Clock class="w-4 h-4 mr-1" />
-                {{ formatDate(article.created_at) }}
-              </time>
-            </div>
-
-            <!-- Social Interactions -->
-            <div class="flex items-center gap-4 pt-4 border-t border-gray-100 dark:border-gray-700">
-              <button 
-                @click.prevent="toggleLike(article)"
-                class="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-red-500 dark:hover:text-red-400 transition-all duration-200"
-              >
-                <Heart :class="{ 'fill-red-500 stroke-red-500': article.liked }" class="w-5 h-5" />
-                <span class="text-sm">{{ article.likes || 0 }}</span>
-              </button>
-              <button class="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-blue-500 dark:hover:text-blue-400 transition-all duration-200">
-                <MessageCircle class="w-5 h-5" />
-                <span class="text-sm">{{ article.comments || 0 }}</span>
-              </button>
-              <button @click.prevent="shareArticle(article)" class="flex items-center gap-1 text-gray-500 dark:text-gray-400 hover:text-green-500 dark:hover:text-green-400 transition-all duration-200">
-                <Share2 class="w-5 h-5" />
-              </button>
+              </h3>
             </div>
           </div>
-        </article>
-      </TransitionGroup>
-
-      <div v-if="hasMoreArticles" class="load-more-container">
-        <button
-          @click="newsStore.loadMoreArticles"
-          class="px-6 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:opacity-50"
-          :disabled="newsStore.isLoading"
-        >
-          {{ newsStore.isLoading ? 'Loading...' : 'Load More' }}
-        </button>
+        </NuxtLink>
       </div>
     </div>
-  </section>
+
+    <!-- Loading State -->
+    <div v-else-if="newsStore.loading" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
+      <div v-for="i in 6" :key="i" class="h-[200px] sm:h-[250px] lg:h-[300px] bg-gray-200 dark:bg-gray-800 rounded-lg animate-pulse"></div>
+    </div>
+
+    <!-- Empty State -->
+    <div v-else class="text-center py-6 md:py-8">
+      <p class="text-sm md:text-base text-gray-500 dark:text-gray-400">No articles available</p>
+    </div>
+  </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { useNewsStore } from '~/stores/news'
-import { MessageCircle, Share2, Heart, Clock } from 'lucide-vue-next'
-import type { Article } from '~/stores/news'
-import SkeletonLoader from './SkeletonLoader.vue'
+import { onMounted } from 'vue';
+import { useNewsStore } from '~/stores/news';
 
-const newsStore = useNewsStore()
-const error = ref<string | null>(null)
-const displayedArticles = computed(() => newsStore.paginatedArticles)
-const hasMoreArticles = computed(() => newsStore.hasMoreArticles)
+const newsStore = useNewsStore();
 
-watch(() => newsStore.activeCategory, () => {
-  newsStore.setCurrentPage(1)
-})
+onMounted(() => {
+  newsStore.init();
+});
 
-const toggleLike = (article: Article) => {
-  // Toggle like status
-  article.liked = !article.liked;
-  // Update likes count
-  if (article.liked) {
-    article.likes = (article.likes || 0) + 1;
-  } else {
-    article.likes = Math.max((article.likes || 0) - 1, 0);
+const defaultImage = '/placeholder-image.svg';
+
+const handleImageError = (e: Event) => {
+  const img = e.target as HTMLImageElement;
+  if (img.src !== defaultImage) {
+    img.src = defaultImage;
   }
 };
 
-const shareArticle = (article: Article) => {
-  if (navigator.share) {
-    navigator.share({
-      title: article.title,
-      text: article.excerpt,
-      url: window.location.origin + '/news/' + article.slug
-    }).catch((error) => console.log('Error sharing:', error));
-  } else {
-    // Fallback for browsers that don't support Web Share API
-    const url = window.location.origin + '/news/' + article.slug;
-    navigator.clipboard.writeText(url)
-      .then(() => alert('Link copied to clipboard!'))
-      .catch((error) => console.log('Error copying to clipboard:', error));
-  }
-};
-
-const formatDate = (dateString: string): string => {
-  return newsStore.getTimeAgo(dateString)
+// Pre-load the default image
+if (typeof window !== 'undefined') {
+  const img = new Image();
+  img.src = defaultImage;
 }
 </script>
 
-<style>
-.fade-enter-active,
-.fade-leave-active {
-  transition: opacity 0.3s ease;
-}
-
-.fade-enter-from,
-.fade-leave-to {
-  opacity: 0;
-}
-
-.container-custom {
-  @apply max-w-7xl mx-auto px-4;
-}
-
-.load-more-container {
-  @apply text-center mt-8;
-}
-
-.end-message {
-  @apply text-center mt-8 text-gray-500;
+<style scoped>
+.news-grid {
+  @apply mb-8 md:mb-12;
 }
 </style>

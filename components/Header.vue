@@ -1,164 +1,138 @@
 <template>
-  <header class="fixed-header">
-    <div class="header-grid">
+  <header class="header">
+    <div class="container max-w-container header-content" :class="{ 'menu-open': isMenuOpen }">
       <!-- Logo -->
-      <NuxtLink to="/" class="logo">
-        <img src="/images/logo.svg" alt="xpost.mn logo" width="150" height="50">
-      </NuxtLink>
+      <div class="logo-wrapper">
+        <NuxtLink to="/" class="logo">
+          <img src="/images/logo.svg" alt="xpost.mn logo" class="h-full w-auto max-w-[120px] sm:max-w-[150px]">
+        </NuxtLink>
+      </div>
       
       <!-- Navigation (desktop only) -->
-      <Navigation :is-menu-open="isMenuOpen" @close="closeMenu" />
+      <div class="nav-wrapper hidden lg:block">
+        <Navigation :is-menu-open="isMenuOpen" @close="closeMenu" />
+      </div>
       
       <!-- Additional Info -->
-      <InfoLinks :is-menu-open="isMenuOpen" @close="closeMenu" />
-      
-      <!-- Color Mode Toggle (Mobile) -->
-      <div class="lg:hidden color-mode-toggle-mobile">
+      <div class="right-content">
+        <InfoLinks class="hidden lg:flex" :is-menu-open="isMenuOpen" @close="closeMenu" />
+        <div class="divider hidden lg:block"></div>
         <ColorModeToggle />
+        <MobileMenuButton class="block lg:hidden" :is-active="isMenuOpen" @click="toggleMenu" />
       </div>
-      
-      <!-- Hamburger Menu -->
-      <MobileMenuButton :is-active="isMenuOpen" @click="toggleMenu" />
-      
-      <!-- Mobile Menu Overlay -->
-      <div 
-        v-if="isMenuOpen" 
-        class="mobile-menu-dialog lg:hidden"
-      >
-        <div class="mobile-menu-header">
-          <div class="header-grid">
-            <div class="mobile-logo">
-              <img src="/images/logo.svg" alt="Logo" />
-            </div>
-          </div>
-        </div>
-        <div class="mobile-menu-content" :class="{ active: isMenuOpen }">
-          <nav class="mobile-nav-links">
-            <NuxtLink 
-              v-for="(link, index) in navLinks" 
-              :key="index" 
-              :to="link.to"
-              :class="{ active: isActive(link.to) }"
-              @click="closeMenu"
-            >
-              {{ link.name }}
-            </NuxtLink>
-          </nav>
-        </div>
-      </div>
+    </div>
+
+    <!-- Mobile Menu Overlay -->
+    <div 
+      v-if="isMenuOpen" 
+      class="mobile-menu-overlay"
+      :style="{
+        background: $colorMode.value === 'dark' ? 'rgb(0, 0, 0)' : 'rgb(255, 255, 255)'
+      }"
+    >
+      <MobileMenuContent @close="closeMenu" />
     </div>
   </header>
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue'
-import { useCategoryStore } from '~/stores/categoryStore';
+import { ref } from 'vue'
 import ColorModeToggle from '~/components/ColorModeToggle.vue'
 import Navigation from './header/Navigation.vue'
 import InfoLinks from './header/InfoLinks.vue'
 import MobileMenuButton from './header/MobileMenuButton.vue'
-
-const categoryStore = useCategoryStore();
+import MobileMenuContent from './MobileMenuContent.vue'
 
 const isMenuOpen = ref(false)
-
-const navLinks = computed(() => {
-  return categoryStore.categories.map(category => ({
-    to: `/category/${category.toLowerCase()}`,
-    name: category
-  }));
-})
+const emit = defineEmits(['menu-toggle'])
 
 function toggleMenu() {
   isMenuOpen.value = !isMenuOpen.value
+  emit('menu-toggle', isMenuOpen.value)
 }
 
 function closeMenu() {
   isMenuOpen.value = false
-}
-
-function isActive(path: string) {
-  return window.location.pathname === path
+  emit('menu-toggle', false)
 }
 </script>
 
 <style scoped>
-.fixed-header {
-  @apply fixed top-[var(--ticker-height)] left-0 right-0 z-50;
-  @apply bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60;
-  @apply border-b border-border shadow-sm;
+.header {
+  @apply relative z-50;
+  @apply bg-white dark:bg-background;
+  @apply border-b border-gray-100 dark:border-gray-800;
   height: var(--header-height);
+  margin: 0;
+  padding: 0;
+  display: flex;
+  align-items: center;
+  width: 100%;
+  overflow-x: hidden;
 }
 
-.header-grid {
-  @apply flex items-center justify-between h-full px-4;
-  max-width: var(--max-width);
+.header-content {
+  @apply flex items-center justify-between;
+  @apply w-full;
+  height: 100%;
   margin: 0 auto;
+  padding: 0 var(--content-padding);
+}
+
+.logo-wrapper {
+  @apply relative z-10 flex-shrink-0;
+  height: 32px;
 }
 
 .logo {
-  @apply flex items-center flex-shrink-0;
-  width: 150px;
+  @apply block transition-all duration-300 hover:opacity-90;
+  height: 100%;
+  transform-origin: left center;
 }
 
-.logo img {
-  @apply w-full h-auto;
+.logo:hover {
+  transform: scale(1.05);
+  filter: drop-shadow(0 0 8px rgba(var(--color-primary-rgb), 0.3));
 }
 
-/* Mobile menu dialog */
-.mobile-menu-dialog {
-  @apply fixed inset-0 bg-background z-50;
-  @apply flex flex-col;
-  height: 100vh;
-  overflow-y: auto;
+.nav-wrapper {
+  @apply flex-1 mx-4;
 }
 
-.mobile-menu-header {
-  @apply sticky top-0 bg-background border-b border-border;
-  height: var(--header-height);
-}
-
-.mobile-menu-content {
-  @apply flex-1 flex flex-col p-4;
-  transition: max-height 0.3s ease, opacity 0.3s ease;
-  max-height: 0;
-  opacity: 0;
-  overflow: hidden;
-}
-
-.mobile-menu-content.active {
-  max-height: 200px;
-  opacity: 1;
-}
-
-.mobile-nav-links {
-  @apply space-y-4;
-}
-
-.mobile-nav-links a {
-  @apply block py-2 px-4 text-lg font-medium text-foreground;
-  @apply hover:bg-accent/50 rounded-md transition-colors;
-}
-
-.mobile-logo {
-  @apply flex items-center flex-shrink-0;
-  width: 150px;
-}
-
-.mobile-logo img {
-  @apply w-full h-auto;
-}
-
-/* Color mode toggle for mobile */
-.color-mode-toggle-mobile {
-  @apply absolute right-16 top-1/2 -translate-y-1/2;
-  z-index: 60;
-}
-
-/* Accessibility */
-@media (prefers-reduced-motion: reduce) {
-  .mobile-menu-content {
-    @apply transition-none;
+.right-content {
+  @apply flex items-center gap-2 sm:gap-4;
+  & > * {
+    @apply transition-transform duration-200;
   }
+  
+  & > *:hover {
+    transform: translateY(-2px);
+  }
+}
+
+.divider {
+  @apply w-px h-6 bg-border mx-2;
+}
+
+.mobile-menu-overlay {
+  @apply fixed inset-0 z-50;
+  height: calc(100vh - var(--header-height) - var(--ticker-height));
+}
+
+/* Mobile styles */
+@media (max-width: 1023px) {
+  .header-content.menu-open {
+    @apply px-0;
+  }
+  
+  .divider {
+    @apply hidden;
+  }
+}
+
+/* Ensure no horizontal scroll */
+:deep(*) {
+  max-width: 100vw;
+  word-wrap: break-word;
 }
 </style>
