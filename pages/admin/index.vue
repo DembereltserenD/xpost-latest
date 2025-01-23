@@ -1,201 +1,486 @@
 <template>
-  <div class="min-h-screen bg-gray-100 dark:bg-gray-900">
-    <AdminHeader />
-    
-    <main class="py-10">
-      <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <!-- Welcome Section -->
-        <div class="md:flex md:items-center md:justify-between mb-8">
-          <div class="flex-1 min-w-0">
-            <h1 class="text-2xl font-bold leading-7 text-gray-900 dark:text-white sm:text-3xl sm:truncate">
-              Хянах самбар
-            </h1>
-            <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-              Сайн байна уу, {{ userEmail }}, Энэ өдрийн мэдээ, статистик.
-            </p>
-          </div>
-          <div class="mt-4 flex md:mt-0 md:ml-4">
-            <NuxtLink to="/admin/posts/create" class="ml-3 inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
-              + Шинэ мэдээ
-            </NuxtLink>
-          </div>
-        </div>
+  <!-- Header Section -->
+  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+          Хянах самбар
+        </h1>
+        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+          Сайн байна уу, {{ userEmail }} - Энэ өдрийн мэдээ, статистик
+        </p>
+      </div>
+      <button
+        @click="toggleColorMode"
+        class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
+      >
+        <svg
+          v-if="colorMode === 'dark'"
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
+          />
+        </svg>
+        <svg
+          v-else
+          class="w-5 h-5"
+          fill="none"
+          stroke="currentColor"
+          viewBox="0 0 24 24"
+        >
+          <path
+            stroke-linecap="round"
+            stroke-linejoin="round"
+            stroke-width="2"
+            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
+          />
+        </svg>
+      </button>
+    </div>
 
-        <!-- Stats Section -->
-        <div class="mt-8">
-          <dl class="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
-            <div class="relative bg-white dark:bg-gray-800 pt-5 px-4 sm:pt-6 sm:px-6 shadow rounded-lg overflow-hidden">
-              <dt>
-                <div class="absolute bg-blue-500 rounded-md p-3">
-                  <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                  </svg>
-                </div>
-                <p class="ml-16 text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Нийт үзэлт</p>
-              </dt>
-              <dd class="ml-16 pb-6 flex items-baseline sm:pb-7">
-                <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-                  {{ totalViews }}
-                </p>
-              </dd>
+    <!-- Stats Grid -->
+    <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      <!-- Published Articles -->
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl transition-all duration-300 hover:shadow-xl" :class="{ 'animate-pulse': loading }">
+        <div class="p-6">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
+                <DocumentTextIcon class="h-6 w-6 text-blue-600 dark:text-blue-300" />
+              </div>
             </div>
-
-            <div class="relative bg-white dark:bg-gray-800 pt-5 px-4 sm:pt-6 sm:px-6 shadow rounded-lg overflow-hidden">
-              <dt>
-                <div class="absolute bg-green-500 rounded-md p-3">
-                  <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
-                  </svg>
-                </div>
-                <p class="ml-16 text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Нийт мэдээ</p>
-              </dt>
-              <dd class="ml-16 pb-6 flex items-baseline sm:pb-7">
-                <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-                  {{ totalPosts }}
-                </p>
-              </dd>
-            </div>
-
-            <div class="relative bg-white dark:bg-gray-800 pt-5 px-4 sm:pt-6 sm:px-6 shadow rounded-lg overflow-hidden">
-              <dt>
-                <div class="absolute bg-red-500 rounded-md p-3">
-                  <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                  </svg>
-                </div>
-                <p class="ml-16 text-sm font-medium text-gray-500 dark:text-gray-400 truncate">Өнөөдрийн мэдээ</p>
-              </dt>
-              <dd class="ml-16 pb-6 flex items-baseline sm:pb-7">
-                <p class="text-2xl font-semibold text-gray-900 dark:text-white">
-                  {{ todayPosts }}
-                </p>
-              </dd>
-            </div>
-          </dl>
-        </div>
-
-        <!-- Recent Posts Section -->
-        <div class="mt-8">
-          <div class="bg-white dark:bg-gray-800 shadow rounded-lg">
-            <div class="px-4 py-5 sm:px-6 flex justify-between items-center">
-              <h3 class="text-lg leading-6 font-medium text-gray-900 dark:text-white">
-                Сүүлийн мэдээнүүд
-              </h3>
-              <select
-                v-model="sortBy"
-                class="mt-1 block pl-3 pr-10 py-2 text-base border-gray-300 dark:border-gray-600 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm rounded-md dark:bg-gray-700 dark:text-white"
-              >
-                <option value="newest">Шинэ нь эхэндээ</option>
-                <option value="oldest">Хуучин нь эхэндээ</option>
-                <option value="featured">Онцлох эхэндээ</option>
-              </select>
-            </div>
-
-            <div class="border-t border-gray-200 dark:border-gray-700">
-              <ul role="list" class="divide-y divide-gray-200 dark:divide-gray-700">
-                <li v-for="post in sortedPosts" :key="post.id" class="px-4 py-4 sm:px-6 hover:bg-gray-50 dark:hover:bg-gray-700">
-                  <div class="flex items-center justify-between">
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium text-blue-600 dark:text-blue-400 truncate">
-                        {{ post.title }}
-                      </p>
-                      <p class="mt-1 text-sm text-gray-600 dark:text-gray-300 line-clamp-2">
-                        {{ post.content }}
-                      </p>
-                      <div class="mt-2 flex items-center text-sm text-gray-500 dark:text-gray-400 space-x-4">
-                        <div class="flex items-center">
-                          <svg class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-                          </svg>
-                          {{ new Date(post.created_at).toLocaleDateString('mn-MN') }}
-                        </div>
-                        <div class="flex items-center">
-                          <svg class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 7h.01M7 3h5c.512 0 1.024.195 1.414.586l7 7a2 2 0 010 2.828l-7 7a2 2 0 01-2.828 0l-7-7A1.994 1.994 0 013 12V7a4 4 0 014-4z" />
-                          </svg>
-                          {{ post.category }}
-                        </div>
-                        <div class="flex items-center">
-                          <svg class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" />
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
-                          </svg>
-                          {{ post.views }} үзсэн
-                        </div>
-                      </div>
-                    </div>
-                    <div class="flex items-center space-x-2">
-                      <button
-                        @click="toggleFeatured(post.id, !post.is_featured)"
-                        class="px-3 py-1 text-sm rounded-full"
-                        :class="post.is_featured ? 'bg-blue-100 dark:bg-blue-900 text-blue-700 dark:text-blue-100' : 'bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-300'"
-                      >
-                        {{ post.is_featured ? 'Онцлох' : 'Энгийн' }}
-                      </button>
-                      <NuxtLink
-                        :to="`/admin/posts/${post.id}/edit`"
-                        class="text-blue-600 dark:text-blue-400 hover:text-blue-800 dark:hover:text-blue-300"
-                      >
-                        Засах
-                      </NuxtLink>
-                      <button
-                        @click="deletePost(post.id)"
-                        class="text-red-600 dark:text-red-400 hover:text-red-800 dark:hover:text-red-300"
-                      >
-                        Устгах
-                      </button>
-                    </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                  Нийтлэгдсэн мэдээ
+                </dt>
+                <dd class="flex items-baseline">
+                  <div class="text-2xl font-semibold text-gray-900 dark:text-white">
+                    {{ animatedStats.published }}
                   </div>
-                </li>
-              </ul>
+                  <div class="ml-2 flex items-baseline text-sm font-semibold" :class="statsChange.published > 0 ? 'text-green-600' : 'text-red-600'">
+                    <span v-if="statsChange.published !== 0">
+                      {{ statsChange.published > 0 ? '+' : '' }}{{ statsChange.published }}
+                    </span>
+                  </div>
+                </dd>
+              </dl>
             </div>
           </div>
         </div>
       </div>
-    </main>
+
+      <!-- Total Views -->
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl transition-all duration-300 hover:shadow-xl" :class="{ 'animate-pulse': loading }">
+        <div class="p-6">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="p-3 bg-indigo-100 dark:bg-indigo-900 rounded-xl">
+                <EyeIcon class="h-6 w-6 text-indigo-600 dark:text-indigo-300" />
+              </div>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                  Нийт үзэлт
+                </dt>
+                <dd class="flex items-baseline">
+                  <div class="text-2xl font-semibold text-gray-900 dark:text-white">
+                    {{ animatedStats.views }}
+                  </div>
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Today's Articles -->
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl transition-all duration-300 hover:shadow-xl" :class="{ 'animate-pulse': loading }">
+        <div class="p-6">
+          <div class="flex items-center">
+            <div class="flex-shrink-0">
+              <div class="p-3 bg-purple-100 dark:bg-purple-900 rounded-xl">
+                <ChatAltIcon class="h-6 w-6 text-purple-600 dark:text-purple-300" />
+              </div>
+            </div>
+            <div class="ml-5 w-0 flex-1">
+              <dl>
+                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                  Өнөөдрийн мэдээ
+                </dt>
+                <dd class="flex items-baseline">
+                  <div class="text-2xl font-semibold text-gray-900 dark:text-white">
+                    {{ animatedStats.today }}
+                  </div>
+                </dd>
+              </dl>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Charts Grid -->
+    <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <!-- Views Over Time Chart -->
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl">
+        <div class="p-6">
+          <h2 class="text-lg font-medium text-gray-900 dark:text-white">Үзэлтийн график</h2>
+          <div class="mt-4" style="height: 300px; position: relative;">
+            <LineChart
+              v-if="!loading && viewsChartData.labels.length > 0"
+              :data="viewsChartData"
+              :options="chartOptions"
+            />
+            <div v-else-if="loading" class="animate-pulse flex space-x-4 h-full">
+              <div class="flex-1 space-y-4 py-1">
+                <div class="h-full rounded bg-gray-200 dark:bg-gray-700"></div>
+              </div>
+            </div>
+            <div v-else class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+              Өгөгдөл олдсонгүй
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Distribution Chart -->
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl">
+        <div class="p-6">
+          <h2 class="text-lg font-medium text-gray-900 dark:text-white">Ангиллын харьцаа</h2>
+          <div class="mt-4" style="height: 300px; position: relative;">
+            <DoughnutChart
+              v-if="!loading && categoryChartData.labels.length > 0"
+              :data="categoryChartData"
+              :options="doughnutOptions"
+            />
+            <div v-else-if="loading" class="animate-pulse flex space-x-4 h-full">
+              <div class="flex-1 space-y-4 py-1">
+                <div class="h-full rounded bg-gray-200 dark:bg-gray-700"></div>
+              </div>
+            </div>
+            <div v-else class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+              Өгөгдөл олдсонгүй
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Content Grid -->
+    <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+      <!-- Most Viewed Articles -->
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl">
+        <div class="p-6">
+          <h2 class="text-lg font-medium text-gray-900 dark:text-white">Хамгийн их үзэлттэй</h2>
+          <div class="mt-4 flow-root">
+            <ul class="-my-5 divide-y divide-gray-200 dark:divide-gray-700">
+              <li v-for="post in topArticles" :key="post.id" class="py-4">
+                <div class="flex items-center space-x-4">
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-indigo-600 dark:text-indigo-400 truncate">
+                      {{ post.title }}
+                    </p>
+                    <div class="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                      <EyeIcon class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400 dark:text-gray-500" />
+                      <p>{{ post.views }} үзэлт</p>
+                    </div>
+                  </div>
+                  <div class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400">
+                    {{ formatDateTime(post.published_at) }}
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Category Breakdown -->
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl">
+        <div class="p-6">
+          <h2 class="text-lg font-medium text-gray-900 dark:text-white">Ангилал</h2>
+          <div class="mt-4 flow-root">
+            <ul class="-my-5 divide-y divide-gray-200 dark:divide-gray-700">
+              <li v-for="category in categoryStats" :key="category.category.name" class="py-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0">
+                      <div class="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                        <span class="text-sm font-medium text-indigo-600 dark:text-indigo-300">
+                          {{ category.category.name[0] }}
+                        </span>
+                      </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {{ category.category.name }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="ml-3">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">
+                      {{ category.count }} мэдээ
+                    </span>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Recent Articles -->
+    <div class="mt-8">
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl">
+        <div class="p-6">
+          <h2 class="text-lg font-medium text-gray-900 dark:text-white">Сүүлд нэмэгдсэн</h2>
+          <div class="mt-4 flow-root">
+            <ul class="-my-5 divide-y divide-gray-200 dark:divide-gray-700">
+              <li v-for="post in recentArticles" :key="post.id" class="py-4">
+                <div class="flex items-center justify-between">
+                  <div class="flex items-center space-x-3">
+                    <div class="flex-shrink-0">
+                      <div class="h-10 w-10 rounded-lg bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                        <DocumentTextIcon class="h-6 w-6 text-purple-600 dark:text-purple-300" />
+                      </div>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                      <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                        {{ post.title }}
+                      </p>
+                      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                        {{ post.category?.name }}
+                      </p>
+                    </div>
+                  </div>
+                  <div class="ml-3">
+                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                      {{ formatDateTime(post.published_at) }}
+                    </span>
+                  </div>
+                </div>
+              </li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </template>
 
 <script setup lang="ts">
-interface Post {
-  id: number;
-  title: string;
-  slug: string;
-  content: string;
-  image_url: string;
-  category: string;
-  is_featured: boolean;
-  views: number;
-  created_at: string;
-}
+import { ref, onMounted, computed } from 'vue'
+import { useSupabaseClient } from '#imports'
+import { 
+  DocumentTextIcon, 
+  PencilIcon, 
+  ChatBubbleLeftIcon as ChatAltIcon, 
+  EyeIcon 
+} from '@heroicons/vue/24/outline'
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  ArcElement
+} from 'chart.js'
+import { Line as LineChart, Doughnut as DoughnutChart } from 'vue-chartjs'
+import { useIntervalFn, useTransition } from '@vueuse/core'
+
+// Register ChartJS components
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  Title,
+  Tooltip,
+  Legend,
+  Filler,
+  ArcElement
+)
+
+definePageMeta({
+  middleware: ['admin'],
+  layout: 'admin'
+})
 
 const supabase = useSupabaseClient()
-const user = useSupabaseUser()
-const userEmail = computed(() => user.value?.email || 'Admin')
-const posts = ref<Post[]>([])
-const sortBy = ref('newest')
-const totalPosts = ref(0)
-const todayPosts = ref(0)
-const totalViews = ref(0)
+const userEmail = ref('Admin')
+const loading = ref(true)
 
-// Fetch stats
-const fetchStats = async () => {
+// Initialize reactive variables
+const rawStats = ref({
+  total: { 
+    published: 0,
+    today: 0,
+    views: 0
+  }
+})
+
+const statsChange = ref({
+  published: 0,
+  today: 0,
+  views: 0
+})
+
+const topArticles = ref([])
+const categoryStats = ref([])
+const recentArticles = ref([])
+
+// Chart data initialization with proper structure
+const viewsChartData = ref({
+  labels: [],
+  datasets: [{
+    label: 'Үзэлт',
+    data: [],
+    fill: true,
+    borderColor: '#4F46E5',
+    tension: 0.1,
+    backgroundColor: 'rgba(79, 70, 229, 0.1)'
+  }]
+})
+
+const categoryChartData = ref({
+  labels: [],
+  datasets: [{
+    label: 'Ангилал',
+    data: [],
+    backgroundColor: [
+      '#4F46E5',
+      '#7C3AED',
+      '#EC4899',
+      '#F59E0B',
+      '#10B981'
+    ],
+    borderWidth: 1,
+    borderColor: 'transparent'
+  }]
+})
+
+// Animated stats using useTransition
+const animatedStats = computed(() => ({
+  published: Math.round(useTransition(rawStats.value.total.published).value),
+  today: Math.round(useTransition(rawStats.value.total.today).value),
+  views: Math.round(useTransition(rawStats.value.total.views).value)
+}))
+
+// Color mode for chart themes
+const colorMode = ref('light')
+const toggleColorMode = () => {
+  colorMode.value = colorMode.value === 'dark' ? 'light' : 'dark'
+}
+
+// Chart options with proper typing
+const chartOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  scales: {
+    y: {
+      beginAtZero: true,
+      grid: {
+        color: colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+      },
+      ticks: {
+        color: colorMode.value === 'dark' ? '#9CA3AF' : '#4B5563',
+        font: {
+          size: 12
+        }
+      }
+    },
+    x: {
+      grid: {
+        color: colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
+      },
+      ticks: {
+        color: colorMode.value === 'dark' ? '#9CA3AF' : '#4B5563',
+        font: {
+          size: 12
+        }
+      }
+    }
+  },
+  plugins: {
+    legend: {
+      display: true,
+      position: 'top' as const,
+      labels: {
+        color: colorMode.value === 'dark' ? '#9CA3AF' : '#4B5563',
+        font: {
+          size: 12
+        }
+      }
+    }
+  }
+}))
+
+const doughnutOptions = computed(() => ({
+  responsive: true,
+  maintainAspectRatio: false,
+  plugins: {
+    legend: {
+      position: 'bottom' as const,
+      labels: {
+        color: colorMode.value === 'dark' ? '#9CA3AF' : '#4B5563',
+        font: {
+          size: 12
+        },
+        padding: 20
+      }
+    }
+  },
+  cutout: '60%',
+  animation: {
+    animateScale: true,
+    animateRotate: true
+  }
+}))
+
+// Format date and time
+const formatDateTime = (dateStr: string) => {
+  const date = new Date(dateStr)
+  return date.toLocaleString('mn-MN', { 
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit'
+  })
+}
+
+// Modified fetchDashboardStats to properly handle chart data
+const fetchDashboardStats = async () => {
+  loading.value = true
   try {
-    console.log('Fetching stats...')
-    
-    // Get total published posts count
-    const { count: postsCount, error: postsError } = await supabase
+    const oldStats = { ...rawStats.value.total }
+
+    // Fetch published articles count
+    const { count: publishedCount, error: publishedError } = await supabase
       .from('news')
       .select('*', { count: 'exact', head: true })
       .eq('is_published', true)
-    
-    if (postsError) {
-      console.error('Error fetching total posts:', postsError)
-      return
+
+    if (!publishedError) {
+      rawStats.value.total.published = publishedCount || 0
+      statsChange.value.published = rawStats.value.total.published - oldStats.published
     }
-    
-    // Get today's news count
+
+    // Fetch today's articles count
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     
@@ -204,106 +489,163 @@ const fetchStats = async () => {
       .select('*', { count: 'exact', head: true })
       .eq('is_published', true)
       .gte('published_at', today.toISOString())
-    
-    if (todayError) {
-      console.error('Error fetching today\'s news:', todayError)
-      return
+
+    if (!todayError) {
+      rawStats.value.total.today = todayCount || 0
+      statsChange.value.today = rawStats.value.total.today - oldStats.today
     }
-    
-    // Get total views count
+
+    // Fetch total views
     const { data: viewsData, error: viewsError } = await supabase
       .from('news')
-      .select('views')
-      .eq('is_published', true)
-    
-    if (viewsError) {
-      console.error('Error fetching views:', viewsError)
-      return
+      .select('views, published_at')
+      .not('views', 'is', null)
+      .order('published_at', { ascending: true })
+
+    console.log('Raw views data:', viewsData)
+
+    // Process views chart data
+    if (viewsData && viewsData.length > 0) {
+      const groupedData = viewsData.reduce((acc, item) => {
+        if (!item.published_at) return acc  // Only check for valid date
+        const date = new Date(item.published_at).toISOString().split('T')[0]
+        acc[date] = (acc[date] || 0) + (Number(item.views) || 0)  // Convert to number and handle null/undefined
+        return acc
+      }, {})
+
+      console.log('Grouped data:', groupedData)
+
+      // Get unique dates (some articles have same publish date)
+      const sortedDates = [...new Set(Object.keys(groupedData))].sort((a, b) => 
+        new Date(a).getTime() - new Date(b).getTime()
+      )
+
+      console.log('Sorted dates:', sortedDates)
+
+      if (sortedDates.length > 0) {
+        viewsChartData.value = {
+          labels: sortedDates.map(date => {
+            const [year, month, day] = date.split('-')
+            return `${month}/${day}`
+          }),
+          datasets: [{
+            label: 'Үзэлт',
+            data: sortedDates.map(date => groupedData[date]),
+            fill: true,  // Changed to true for better visibility
+            borderColor: '#4F46E5',
+            tension: 0.1,
+            backgroundColor: 'rgba(79, 70, 229, 0.1)'
+          }]
+        }
+        console.log('Chart data:', viewsChartData.value)
+      }
     }
 
-    totalPosts.value = postsCount || 0
-    todayPosts.value = todayCount || 0
-    totalViews.value = viewsData?.reduce((sum, post) => sum + (Number(post.views) || 0), 0) || 0
-
-    console.log('Stats fetched successfully:', {
-      totalPosts: totalPosts.value,
-      todayPosts: todayPosts.value,
-      totalViews: totalViews.value
-    })
-
-  } catch (err) {
-    console.error('Error fetching stats:', err)
-  }
-}
-
-// Fetch recent posts
-const fetchPosts = async () => {
-  try {
-    const { data, error } = await supabase
+    // Fetch top articles
+    const { data: topData, error: topError } = await supabase
       .from('news')
-      .select('*')
-      .order('created_at', { ascending: false })
-      .limit(10)
+      .select(`
+        id,
+        title,
+        views,
+        published_at
+      `)
+      .eq('is_published', true)
+      .order('views', { ascending: false })
+      .limit(5)
 
-    if (error) throw error
-    posts.value = data || []
-  } catch (err) {
-    console.error('Error fetching posts:', err)
-  }
-}
+    if (!topError && topData) {
+      topArticles.value = topData
+    }
 
-// Sort posts based on selected option
-const sortedPosts = computed(() => {
-  const sorted = [...posts.value]
-  switch (sortBy.value) {
-    case 'oldest':
-      return sorted.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-    case 'featured':
-      return sorted.filter(post => post.is_featured)
-    default: // newest
-      return sorted.sort((a, b) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
-  }
-})
+    // Fetch categories with counts
+    const { data: categories, error: catError } = await supabase
+      .from('categories')
+      .select('id, name')
 
-// Toggle featured news status
-const toggleFeatured = async (id: number, isFeatured: boolean) => {
-  try {
-    const { error } = await supabase
+    if (!catError && categories) {
+      const categoryPromises = categories.map(async (category) => {
+        const { count, error } = await supabase
+          .from('news')
+          .select('*', { count: 'exact', head: true })
+          .eq('category_id', category.id)
+          .eq('is_published', true)
+
+        return {
+          category: { name: category.name },
+          count: count || 0
+        }
+      })
+
+      categoryStats.value = await Promise.all(categoryPromises)
+
+      console.log('Category stats:', categoryStats.value)
+
+      // Update category chart
+      if (categoryStats.value.length > 0) {
+        categoryChartData.value = {
+          labels: categoryStats.value.map(cat => cat.category.name),
+          datasets: [{
+            label: 'Ангилал',
+            data: categoryStats.value.map(cat => cat.count),
+            backgroundColor: [
+              '#4F46E5',
+              '#7C3AED',
+              '#EC4899',
+              '#F59E0B',
+              '#10B981'
+            ],
+            borderWidth: 1,
+            borderColor: 'transparent'
+          }]
+        }
+        console.log('Category chart data:', categoryChartData.value)
+      }
+    }
+
+    // Fetch recent articles
+    const { data: recentData, error: recentError } = await supabase
       .from('news')
-      .update({ is_featured: isFeatured })
-      .eq('id', id)
+      .select(`
+        id,
+        title,
+        published_at,
+        category:categories(name)
+      `)
+      .eq('is_published', true)
+      .order('published_at', { ascending: false })
+      .limit(5)
 
-    if (error) throw error
-    await Promise.all([fetchPosts(), fetchStats()])
-  } catch (err) {
-    console.error('Error updating post:', err)
+    if (!recentError && recentData) {
+      recentArticles.value = recentData
+    }
+
+  } catch (error) {
+    console.error('Error fetching dashboard stats:', error)
+  } finally {
+    loading.value = false
   }
 }
 
-// Delete post
-const deletePost = async (id: number) => {
-  if (!confirm('Энэ мэдээг устгахдаа итгэлтэй байна уу?')) return
+// Fetch stats every minute
+useIntervalFn(async () => {
+  await fetchDashboardStats()
+}, 60000)
 
-  try {
-    const { error } = await supabase
-      .from('news')
-      .delete()
-      .eq('id', id)
-
-    if (error) throw error
-    await Promise.all([fetchPosts(), fetchStats()])
-  } catch (err) {
-    console.error('Error deleting post:', err)
-  }
-}
-
+// Start fetching data
 onMounted(() => {
-  fetchPosts()
-  fetchStats()
-})
-
-definePageMeta({
-  middleware: ['admin'],
-  layout: 'admin'
+  fetchDashboardStats()
 })
 </script>
+
+<style>
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity 0.5s ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}
+</style>

@@ -19,9 +19,9 @@
     "@pinia/nuxt": "^0.5.1",
     "@supabase/supabase-js": "^2.47.10",
     "@tinymce/tinymce-vue": "^6.1.0",
-    "@vueuse/core": "^10.9.0",
+    "@vueuse/core": "^10.11.1",
     "@vueuse/nuxt": "^10.9.0",
-    "chart.js": "^4.4.1",
+    "chart.js": "^4.4.7",
     "class-variance-authority": "^0.7.0",
     "clsx": "^2.1.0",
     "date-fns": "^4.1.0",
@@ -35,7 +35,7 @@
     "radix-vue": "^1.9.11",
     "tailwind-merge": "^2.2.1",
     "vue": "^3.4.21",
-    "vue-chartjs": "^5.3.0",
+    "vue-chartjs": "^5.3.2",
     "xml2js": "^0.6.2"
   },
   "devDependencies": {
