@@ -7,4 +7,8 @@
 
 <script setup lang="ts">
 import NewsGrid from '~/components/NewsGrid.vue'
+
+definePageMeta({
+  ssr: true  // Enable SSR for better SEO on news content
+})
 </script>

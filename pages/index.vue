@@ -66,6 +66,10 @@ import { computed, onMounted } from 'vue'
 import { Clock } from 'lucide-vue-next'
 import { useNewsStore } from '~/stores/news'
 
+definePageMeta({
+  ssr: true  // Enable SSR for better SEO on homepage
+})
+
 const newsStore = useNewsStore()
 
 // Use computed properties to access store state

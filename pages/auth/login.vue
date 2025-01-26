@@ -79,7 +79,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { createClient } from '@supabase/supabase-js'
-import { useRuntimeConfig, navigateTo } from '#imports'
+import { useRuntimeConfig, navigateTo, useRoute } from '#imports'
 
 const config = useRuntimeConfig()
 const supabase = createClient(
@@ -96,7 +96,21 @@ const loading = ref(false)
 onMounted(async () => {
   const { data: { session } } = await supabase.auth.getSession()
   if (session) {
-    navigateTo('/admin')
+    // Check if user is admin
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', session.user.id)
+      .single()
+
+    if (profile?.is_admin) {
+      navigateTo('/admin')
+    }
+  }
+
+  const route = useRoute()
+  if (route.query.error) {
+    error.value = route.query.error as string
   }
 })
 
@@ -112,6 +126,19 @@ const handleLogin = async () => {
 
     if (authError) throw authError
 
+    // Check if user is admin
+    const { data: profile } = await supabase
+      .from('profiles')
+      .select('is_admin')
+      .eq('id', data.user.id)
+      .single()
+
+    if (!profile || !profile.is_admin) {
+      error.value = 'Танд админ эрх байхгүй байна'
+      await supabase.auth.signOut()
+      return
+    }
+
     // Redirect to admin page on successful login
     navigateTo('/admin')
   } catch (err: any) {
@@ -125,7 +152,8 @@ const handleLogin = async () => {
 // Define the layout for this page
 definePageMeta({
   layout: 'auth',
-  middleware: ['auth']
+  middleware: ['auth'],
+  ssr: false  // Enable CSR for authentication
 })
 </script>
 

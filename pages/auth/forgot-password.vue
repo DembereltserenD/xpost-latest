@@ -107,6 +107,7 @@ const handleResetPassword = async () => {
 
 // Define the layout for this page
 definePageMeta({
-  layout: 'auth'
+  layout: 'auth',
+  ssr: false  // Enable CSR for authentication
 })
 </script>

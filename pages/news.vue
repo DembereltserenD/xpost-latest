@@ -30,6 +30,10 @@
 import { ref, onMounted } from 'vue'
 import { useNewsStore } from '~/stores/news'
 
+definePageMeta({
+  ssr: false  // Enable CSR for this page
+})
+
 const newsStore = useNewsStore()
 const loading = ref(false)
 const error = ref<string | null>(null)

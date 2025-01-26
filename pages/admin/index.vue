@@ -1,277 +1,251 @@
 <template>
   <!-- Header Section -->
-  <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-    <div class="flex items-center justify-between">
+  <div class="max-w-full mx-auto px-4 sm:px-6 lg:px-8 overflow-x-hidden">
+    <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between">
       <div>
-        <h1 class="text-3xl font-bold text-gray-900 dark:text-white">
+        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900 dark:text-white">
           Хянах самбар
         </h1>
-        <p class="mt-2 text-sm text-gray-600 dark:text-gray-400">
+        <p class="mt-1 sm:mt-2 text-sm text-gray-600 dark:text-gray-400">
           Сайн байна уу, {{ userEmail }} - Энэ өдрийн мэдээ, статистик
         </p>
       </div>
-      <button
-        @click="toggleColorMode"
-        class="p-2 rounded-lg bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 hover:bg-gray-200 dark:hover:bg-gray-700"
-      >
-        <svg
-          v-if="colorMode === 'dark'"
-          class="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"
-          />
-        </svg>
-        <svg
-          v-else
-          class="w-5 h-5"
-          fill="none"
-          stroke="currentColor"
-          viewBox="0 0 24 24"
-        >
-          <path
-            stroke-linecap="round"
-            stroke-linejoin="round"
-            stroke-width="2"
-            d="M20.354 15.354A9 9 0 018.646 3.646 9.003 9.003 0 0012 21a9.003 9.003 0 008.354-5.646z"
-          />
-        </svg>
-      </button>
     </div>
 
     <!-- Stats Grid -->
-    <div class="mt-8 grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">
+    <div class="mt-6 sm:mt-8 grid grid-cols-1 gap-4 sm:gap-6 sm:grid-cols-2 lg:grid-cols-3">
       <!-- Published Articles -->
-      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl transition-all duration-300 hover:shadow-xl" :class="{ 'animate-pulse': loading }">
-        <div class="p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
-                <DocumentTextIcon class="h-6 w-6 text-blue-600 dark:text-blue-300" />
-              </div>
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl p-4 sm:p-6" :class="{ 'animate-pulse': loading }">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="p-3 bg-blue-100 dark:bg-blue-900 rounded-xl">
+              <DocumentTextIcon class="h-6 w-6 text-blue-600 dark:text-blue-300" />
             </div>
-            <div class="ml-5 w-0 flex-1">
-              <dl>
-                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                  Нийтлэгдсэн мэдээ
-                </dt>
-                <dd class="flex items-baseline">
-                  <div class="text-2xl font-semibold text-gray-900 dark:text-white">
-                    {{ animatedStats.published }}
-                  </div>
-                  <div class="ml-2 flex items-baseline text-sm font-semibold" :class="statsChange.published > 0 ? 'text-green-600' : 'text-red-600'">
-                    <span v-if="statsChange.published !== 0">
-                      {{ statsChange.published > 0 ? '+' : '' }}{{ statsChange.published }}
-                    </span>
-                  </div>
-                </dd>
-              </dl>
-            </div>
+          </div>
+          <div class="ml-4 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                Нийтлэгдсэн мэдээ
+              </dt>
+              <dd class="mt-1 flex items-baseline">
+                <div class="text-2xl font-semibold text-gray-900 dark:text-white">
+                  {{ animatedStats.published }}
+                </div>
+                <div class="ml-2 flex items-baseline text-sm font-semibold" :class="statsChange.published > 0 ? 'text-green-600' : 'text-red-600'">
+                  <span v-if="statsChange.published !== 0">
+                    {{ statsChange.published > 0 ? '+' : '' }}{{ statsChange.published }}
+                  </span>
+                </div>
+              </dd>
+            </dl>
           </div>
         </div>
       </div>
 
       <!-- Total Views -->
-      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl transition-all duration-300 hover:shadow-xl" :class="{ 'animate-pulse': loading }">
-        <div class="p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <div class="p-3 bg-indigo-100 dark:bg-indigo-900 rounded-xl">
-                <EyeIcon class="h-6 w-6 text-indigo-600 dark:text-indigo-300" />
-              </div>
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl p-4 sm:p-6" :class="{ 'animate-pulse': loading }">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="p-3 bg-indigo-100 dark:bg-indigo-900 rounded-xl">
+              <EyeIcon class="h-6 w-6 text-indigo-600 dark:text-indigo-300" />
             </div>
-            <div class="ml-5 w-0 flex-1">
-              <dl>
-                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                  Нийт үзэлт
-                </dt>
-                <dd class="flex items-baseline">
-                  <div class="text-2xl font-semibold text-gray-900 dark:text-white">
-                    {{ animatedStats.views }}
-                  </div>
-                </dd>
-              </dl>
-            </div>
+          </div>
+          <div class="ml-4 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                Нийт үзэлт
+              </dt>
+              <dd class="mt-1 flex items-baseline">
+                <div class="text-2xl font-semibold text-gray-900 dark:text-white">
+                  {{ animatedStats.views }}
+                </div>
+              </dd>
+            </dl>
           </div>
         </div>
       </div>
 
       <!-- Today's Articles -->
-      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl transition-all duration-300 hover:shadow-xl" :class="{ 'animate-pulse': loading }">
-        <div class="p-6">
-          <div class="flex items-center">
-            <div class="flex-shrink-0">
-              <div class="p-3 bg-purple-100 dark:bg-purple-900 rounded-xl">
-                <ChatAltIcon class="h-6 w-6 text-purple-600 dark:text-purple-300" />
-              </div>
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl p-4 sm:p-6" :class="{ 'animate-pulse': loading }">
+        <div class="flex items-center">
+          <div class="flex-shrink-0">
+            <div class="p-3 bg-purple-100 dark:bg-purple-900 rounded-xl">
+              <ChatAltIcon class="h-6 w-6 text-purple-600 dark:text-purple-300" />
             </div>
-            <div class="ml-5 w-0 flex-1">
-              <dl>
-                <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
-                  Өнөөдрийн мэдээ
-                </dt>
-                <dd class="flex items-baseline">
-                  <div class="text-2xl font-semibold text-gray-900 dark:text-white">
-                    {{ animatedStats.today }}
-                  </div>
-                </dd>
-              </dl>
-            </div>
+          </div>
+          <div class="ml-4 flex-1">
+            <dl>
+              <dt class="text-sm font-medium text-gray-500 dark:text-gray-400 truncate">
+                Өнөөдрийн мэдээ
+              </dt>
+              <dd class="mt-1 flex items-baseline">
+                <div class="text-2xl font-semibold text-gray-900 dark:text-white">
+                  {{ animatedStats.today }}
+                </div>
+              </dd>
+            </dl>
           </div>
         </div>
       </div>
     </div>
 
     <!-- Charts Grid -->
-    <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+    <div class="mt-6 sm:mt-8 grid grid-cols-1 gap-4 sm:gap-8 lg:grid-cols-2">
       <!-- Views Over Time Chart -->
-      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl">
-        <div class="p-6">
-          <h2 class="text-lg font-medium text-gray-900 dark:text-white">Үзэлтийн график</h2>
-          <div class="mt-4" style="height: 300px; position: relative;">
-            <LineChart
-              v-if="!loading && viewsChartData.labels.length > 0"
-              :data="viewsChartData"
-              :options="chartOptions"
-            />
-            <div v-else-if="loading" class="animate-pulse flex space-x-4 h-full">
-              <div class="flex-1 space-y-4 py-1">
-                <div class="h-full rounded bg-gray-200 dark:bg-gray-700"></div>
-              </div>
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl p-4 sm:p-6 h-[350px]">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white mb-2">Үзэлтийн график</h2>
+        <div class="h-[280px]">
+          <LineChart
+            v-if="!loading && viewsChartData.labels.length > 0"
+            :data="viewsChartData"
+            :options="{
+              ...chartOptions,
+              maintainAspectRatio: false,
+              responsive: true,
+              scales: {
+                x: {
+                  grid: {
+                    display: true
+                  }
+                },
+                y: {
+                  grid: {
+                    display: true
+                  },
+                  beginAtZero: true
+                }
+              }
+            }"
+            class="w-full h-full"
+          />
+          <div v-else-if="loading" class="animate-pulse flex space-x-4 h-full">
+            <div class="flex-1 space-y-4 py-1">
+              <div class="h-full rounded bg-gray-200 dark:bg-gray-700"></div>
             </div>
-            <div v-else class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-              Өгөгдөл олдсонгүй
-            </div>
+          </div>
+          <div v-else class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+            Өгөгдөл олдсонгүй
           </div>
         </div>
       </div>
 
       <!-- Category Distribution Chart -->
-      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl">
-        <div class="p-6">
-          <h2 class="text-lg font-medium text-gray-900 dark:text-white">Ангиллын харьцаа</h2>
-          <div class="mt-4" style="height: 300px; position: relative;">
-            <DoughnutChart
-              v-if="!loading && categoryChartData.labels.length > 0"
-              :data="categoryChartData"
-              :options="doughnutOptions"
-            />
-            <div v-else-if="loading" class="animate-pulse flex space-x-4 h-full">
-              <div class="flex-1 space-y-4 py-1">
-                <div class="h-full rounded bg-gray-200 dark:bg-gray-700"></div>
-              </div>
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl p-4 sm:p-6 h-full">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white">Ангиллын харьцаа</h2>
+        <div class="mt-3 sm:mt-4 relative h-[400px] flex items-center justify-center">
+          <DoughnutChart
+            v-if="!loading && categoryChartData.labels.length > 0"
+            :data="categoryChartData"
+            :options="{
+              ...doughnutOptions,
+              maintainAspectRatio: false,
+              responsive: true
+            }"
+            class="w-full h-full max-w-[400px]"
+          />
+          <div v-else-if="loading" class="animate-pulse flex space-x-4 h-full">
+            <div class="flex-1 space-y-4 py-1">
+              <div class="h-full rounded bg-gray-200 dark:bg-gray-700"></div>
             </div>
-            <div v-else class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
-              Өгөгдөл олдсонгүй
-            </div>
+          </div>
+          <div v-else class="flex items-center justify-center h-full text-gray-500 dark:text-gray-400">
+            Өгөгдөл олдсонгүй
           </div>
         </div>
       </div>
     </div>
 
     <!-- Content Grid -->
-    <div class="mt-8 grid grid-cols-1 gap-8 lg:grid-cols-2">
+    <div class="mt-6 sm:mt-8 grid grid-cols-1 gap-4 sm:gap-8 lg:grid-cols-2">
       <!-- Most Viewed Articles -->
-      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl">
-        <div class="p-6">
-          <h2 class="text-lg font-medium text-gray-900 dark:text-white">Хамгийн их үзэлттэй</h2>
-          <div class="mt-4 flow-root">
-            <ul class="-my-5 divide-y divide-gray-200 dark:divide-gray-700">
-              <li v-for="post in topArticles" :key="post.id" class="py-4">
-                <div class="flex items-center space-x-4">
-                  <div class="flex-1 min-w-0">
-                    <p class="text-sm font-medium text-indigo-600 dark:text-indigo-400 truncate">
-                      {{ post.title }}
-                    </p>
-                    <div class="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-400">
-                      <EyeIcon class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400 dark:text-gray-500" />
-                      <p>{{ post.views }} үзэлт</p>
-                    </div>
-                  </div>
-                  <div class="inline-flex items-center text-sm text-gray-500 dark:text-gray-400">
-                    {{ formatDateTime(post.published_at) }}
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl p-4 sm:p-6">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white">Хамгийн их үзэлттэй</h2>
+        <div class="mt-3 sm:mt-4 flow-root">
+          <ul class="-my-4 sm:-my-5 divide-y divide-gray-200 dark:divide-gray-700">
+            <li v-for="post in topArticles" :key="post.id" class="py-3 sm:py-4">
+              <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                <div class="flex-1 min-w-0">
+                  <p class="text-sm font-medium text-indigo-600 dark:text-indigo-400 truncate">
+                    {{ post.title }}
+                  </p>
+                  <div class="mt-1 flex items-center text-sm text-gray-500 dark:text-gray-400">
+                    <EyeIcon class="flex-shrink-0 mr-1.5 h-5 w-5 text-gray-400 dark:text-gray-500" />
+                    <p>{{ post.views }} үзэлт</p>
                   </div>
                 </div>
-              </li>
-            </ul>
-          </div>
+                <div class="text-sm text-gray-500 dark:text-gray-400">
+                  {{ formatDateTime(post.published_at) }}
+                </div>
+              </div>
+            </li>
+          </ul>
         </div>
       </div>
 
       <!-- Category Breakdown -->
-      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl">
-        <div class="p-6">
-          <h2 class="text-lg font-medium text-gray-900 dark:text-white">Ангилал</h2>
-          <div class="mt-4 flow-root">
-            <ul class="-my-5 divide-y divide-gray-200 dark:divide-gray-700">
-              <li v-for="category in categoryStats" :key="category.category.name" class="py-4">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center space-x-3">
-                    <div class="flex-shrink-0">
-                      <div class="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
-                        <span class="text-sm font-medium text-indigo-600 dark:text-indigo-300">
-                          {{ category.category.name[0] }}
-                        </span>
-                      </div>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {{ category.category.name }}
-                      </p>
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl p-4 sm:p-6">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white">Ангилал</h2>
+        <div class="mt-3 sm:mt-4 flow-root">
+          <ul class="-my-4 sm:-my-5 divide-y divide-gray-200 dark:divide-gray-700">
+            <li v-for="category in categoryStats" :key="category.category.name" class="py-3 sm:py-4">
+              <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0">
+                <div class="flex items-center flex-1 min-w-0">
+                  <div class="flex-shrink-0">
+                    <div class="h-8 w-8 rounded-lg bg-indigo-100 dark:bg-indigo-900 flex items-center justify-center">
+                      <span class="text-sm font-medium text-indigo-600 dark:text-indigo-300">
+                        {{ category.category.name[0] }}
+                      </span>
                     </div>
                   </div>
-                  <div class="ml-3">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">
-                      {{ category.count }} мэдээ
-                    </span>
+                  <div class="ml-3 flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {{ category.category.name }}
+                    </p>
                   </div>
                 </div>
-              </li>
-            </ul>
-          </div>
+                <div class="sm:ml-3">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 dark:bg-indigo-900 text-indigo-800 dark:text-indigo-200">
+                    {{ category.count }} мэдээ
+                  </span>
+                </div>
+              </div>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
 
     <!-- Recent Articles -->
-    <div class="mt-8">
-      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl">
-        <div class="p-6">
-          <h2 class="text-lg font-medium text-gray-900 dark:text-white">Сүүлд нэмэгдсэн</h2>
-          <div class="mt-4 flow-root">
-            <ul class="-my-5 divide-y divide-gray-200 dark:divide-gray-700">
-              <li v-for="post in recentArticles" :key="post.id" class="py-4">
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center space-x-3">
-                    <div class="flex-shrink-0">
-                      <div class="h-10 w-10 rounded-lg bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
-                        <DocumentTextIcon class="h-6 w-6 text-purple-600 dark:text-purple-300" />
-                      </div>
-                    </div>
-                    <div class="flex-1 min-w-0">
-                      <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
-                        {{ post.title }}
-                      </p>
-                      <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
-                        {{ post.category?.name }}
-                      </p>
+    <div class="mt-6 sm:mt-8">
+      <div class="bg-white dark:bg-gray-800 overflow-hidden shadow-lg rounded-2xl p-4 sm:p-6">
+        <h2 class="text-lg font-medium text-gray-900 dark:text-white">Сүүлд нэмэгдсэн</h2>
+        <div class="mt-3 sm:mt-4 flow-root">
+          <ul class="-my-4 sm:-my-5 divide-y divide-gray-200 dark:divide-gray-700">
+            <li v-for="post in recentArticles" :key="post.id" class="py-3 sm:py-4">
+              <div class="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0">
+                <div class="flex items-center space-x-3 flex-1 min-w-0">
+                  <div class="flex-shrink-0">
+                    <div class="h-10 w-10 rounded-lg bg-purple-100 dark:bg-purple-900 flex items-center justify-center">
+                      <DocumentTextIcon class="h-6 w-6 text-purple-600 dark:text-purple-300" />
                     </div>
                   </div>
-                  <div class="ml-3">
-                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
-                      {{ formatDateTime(post.published_at) }}
-                    </span>
+                  <div class="flex-1 min-w-0">
+                    <p class="text-sm font-medium text-gray-900 dark:text-white truncate">
+                      {{ post.title }}
+                    </p>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400">
+                      {{ post.category?.name }}
+                    </p>
                   </div>
                 </div>
-              </li>
-            </ul>
-          </div>
+                <div class="sm:ml-3">
+                  <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 dark:bg-green-900 text-green-800 dark:text-green-200">
+                    {{ formatDateTime(post.published_at) }}
+                  </span>
+                </div>
+              </div>
+            </li>
+          </ul>
         </div>
       </div>
     </div>
@@ -316,7 +290,8 @@ ChartJS.register(
 )
 
 definePageMeta({
-  middleware: ['admin'],
+  ssr: false,  // Enable CSR for admin dashboard
+  middleware: ['auth', 'admin'],
   layout: 'admin'
 })
 
@@ -382,14 +357,12 @@ const animatedStats = computed(() => ({
 
 // Color mode for chart themes
 const colorMode = ref('light')
-const toggleColorMode = () => {
-  colorMode.value = colorMode.value === 'dark' ? 'light' : 'dark'
-}
 
 // Chart options with proper typing
 const chartOptions = computed(() => ({
   responsive: true,
-  maintainAspectRatio: false,
+  maintainAspectRatio: true,
+  aspectRatio: window.innerWidth < 640 ? 1 : 2,
   scales: {
     y: {
       beginAtZero: true,
@@ -397,7 +370,7 @@ const chartOptions = computed(() => ({
         color: colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
       },
       ticks: {
-        color: colorMode.value === 'dark' ? '#9CA3AF' : '#4B5563',
+        color: colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563',
         font: {
           size: 12
         }
@@ -408,22 +381,41 @@ const chartOptions = computed(() => ({
         color: colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'
       },
       ticks: {
-        color: colorMode.value === 'dark' ? '#9CA3AF' : '#4B5563',
+        color: colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563',
         font: {
           size: 12
-        }
+        },
+        maxRotation: 45,
+        minRotation: 45
       }
     }
   },
   plugins: {
-    legend: {
+    title: {
       display: true,
       position: 'top' as const,
       labels: {
-        color: colorMode.value === 'dark' ? '#9CA3AF' : '#4B5563',
+        color: colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563',
         font: {
           size: 12
         }
+      }
+    },
+    tooltip: {
+      backgroundColor: colorMode.value === 'dark' ? '#374151' : 'rgba(255, 255, 255, 0.9)',
+      titleColor: colorMode.value === 'dark' ? '#fff' : '#000',
+      bodyColor: colorMode.value === 'dark' ? '#fff' : '#000',
+      borderColor: colorMode.value === 'dark' ? '#4B5563' : '#E5E7EB',
+      borderWidth: 1
+    },
+    legend: {
+      position: 'bottom' as const,
+      labels: {
+        color: colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563',
+        font: {
+          size: 12
+        },
+        padding: 20
       }
     }
   }
@@ -431,12 +423,12 @@ const chartOptions = computed(() => ({
 
 const doughnutOptions = computed(() => ({
   responsive: true,
-  maintainAspectRatio: false,
+  maintainAspectRatio: true,
   plugins: {
     legend: {
       position: 'bottom' as const,
       labels: {
-        color: colorMode.value === 'dark' ? '#9CA3AF' : '#4B5563',
+        color: colorMode.value === 'dark' ? 'rgba(255, 255, 255, 0.8)' : '#4B5563',
         font: {
           size: 12
         },

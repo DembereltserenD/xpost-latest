@@ -1,14 +1,20 @@
 <template>
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <!-- Sidebar -->
-    <aside class="fixed inset-y-0 left-0 w-64 bg-white dark:bg-gray-800 shadow-lg z-20">
+    <aside 
+      :class="[
+        'fixed inset-y-0 left-0 z-20 bg-white dark:bg-gray-800 shadow-lg transform lg:transform-none lg:opacity-100 transition-all duration-300',
+        isSidebarOpen ? 'translate-x-0 opacity-100' : '-translate-x-full opacity-0 lg:translate-x-0'
+      ]"
+      class="w-64"
+    >
       <!-- Logo -->
       <div class="flex items-center justify-between h-16 px-4 border-b dark:border-gray-700">
         <h1 class="text-xl font-bold text-gray-900 dark:text-white">
           <span class="text-blue-500">X</span>post.mn
         </h1>
         <button 
-          @click="isSidebarOpen = !isSidebarOpen"
+          @click="isSidebarOpen = false"
           class="lg:hidden text-gray-500 hover:text-gray-600 dark:text-gray-400 dark:hover:text-gray-300"
         >
           <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -76,6 +82,13 @@
         </NuxtLink>
       </nav>
     </aside>
+
+    <!-- Overlay -->
+    <div 
+      v-if="isSidebarOpen" 
+      @click="isSidebarOpen = false"
+      class="fixed inset-0 bg-gray-900/50 backdrop-blur-sm z-10 lg:hidden"
+    ></div>
 
     <!-- Main Content -->
     <div class="lg:pl-64">

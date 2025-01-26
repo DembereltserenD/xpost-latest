@@ -87,7 +87,11 @@
 </template>
 
 <script setup>
-import { onMounted, ref, computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+
+definePageMeta({
+  ssr: false  // Enable CSR for real-time exchange rates
+})
 
 const rates = ref([])
 const loading = ref(false)

@@ -21,6 +21,12 @@
 </template>
 
 <script>
+definePageMeta({
+  ssr: false,  // Enable CSR for admin settings
+  layout: 'admin',
+  middleware: ['auth']
+})
+
 export default {
     data() {
         return {

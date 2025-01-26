@@ -114,6 +114,7 @@ async function handleLogin() {
 }
 
 definePageMeta({
-  layout: 'auth'
+  layout: 'auth',
+  middleware: ['auth']
 })
 </script>

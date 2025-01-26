@@ -4,3 +4,9 @@
     <div class="text-gray-400">Удахгүй...</div>
   </div>
 </template>
+
+<script setup>
+definePageMeta({
+  ssr: false  // Enable CSR for interactive horoscope content
+})
+</script>

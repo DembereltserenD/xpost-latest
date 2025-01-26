@@ -219,6 +219,10 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({
+  ssr: false  // Enable CSR for dynamic weather updates
+})
+
 import { ref, computed } from 'vue'
 import { useWeatherStore } from '~/stores/weather'
 import { 
