@@ -275,6 +275,7 @@ import {
 } from 'chart.js'
 import { Line as LineChart, Doughnut as DoughnutChart } from 'vue-chartjs'
 import { useIntervalFn, useTransition } from '@vueuse/core'
+import { useRouter } from 'vue-router'
 
 // Register ChartJS components
 ChartJS.register(
@@ -627,6 +628,13 @@ useIntervalFn(async () => {
 // Start fetching data
 onMounted(() => {
   fetchDashboardStats()
+})
+
+const router = useRouter()
+onMounted(() => {
+  if (window.location.pathname === '/admin') {
+    router.push('/admin/dashboard')
+  }
 })
 </script>
 

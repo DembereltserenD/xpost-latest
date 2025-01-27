@@ -10,8 +10,8 @@ export default defineNuxtConfig({
         { name: 'format-detection', content: 'telephone=no' }
       ]
     },
-    pageTransition: { name: "page", mode: "out-in" },
-    layoutTransition: { name: "layout", mode: "out-in" },
+    pageTransition: false,
+    layoutTransition: false,
   },
 
   modules: [

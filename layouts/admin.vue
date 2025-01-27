@@ -39,7 +39,7 @@
         <NuxtLink 
           to="/admin/news" 
           class="flex items-center px-4 py-2 text-gray-700 dark:text-gray-300 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700"
-          :class="{ 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-500': route.path === '/admin/news' }"
+          :class="{ 'bg-blue-50 dark:bg-blue-900/50 text-blue-600 dark:text-blue-500': route.path.startsWith('/admin/news') }"
         >
           <svg class="w-5 h-5 mr-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 20H5a2 2 0 01-2-2V6a2 2 0 012-2h10a2 2 0 012 2v1m2 13a2 2 0 01-2-2V7m2 13a2 2 0 002-2V9.5a2.5 2.5 0 00-2.5-2.5H14" />
@@ -166,18 +166,12 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useRoute } from 'vue-router'
+import { useSupabaseClient } from '#imports'
 import { useColorMode } from '#imports'
-import { useRuntimeConfig } from '#imports'
-import { createClient } from '@supabase/supabase-js'
 import type { User } from '@supabase/supabase-js'
 
-const config = useRuntimeConfig()
-const supabase = createClient(
-  config.public.supabaseUrl,
-  config.public.supabaseKey
-)
-
 const route = useRoute()
+const supabase = useSupabaseClient()
 const colorMode = useColorMode()
 const isSidebarOpen = ref(false)
 const isProfileOpen = ref(false)

@@ -1,6 +1,6 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
-import { createClient } from '@supabase/supabase-js'
+import { useSupabaseClient } from '#imports'
 import { useRuntimeConfig } from '#imports'
 
 export interface Article {
@@ -9,7 +9,6 @@ export interface Article {
   slug: string
   content: string
   excerpt: string
-  summary?: string
   featured_image: string | null
   category_id: string
   created_at: string
@@ -23,15 +22,13 @@ export interface Article {
     name: string
     slug: string
   }
+  featured_position?: number
 }
 
 export const useNewsStore = defineStore('news', {
   state: () => {
     const config = useRuntimeConfig()
-    const supabase = createClient(
-      config.public.supabaseUrl,
-      config.public.supabaseKey
-    )
+    const supabase = useSupabaseClient()
 
     return {
       latestArticles: [] as Article[],
@@ -81,7 +78,6 @@ export const useNewsStore = defineStore('news', {
           slug: article.slug,
           content: article.content,
           excerpt: article.excerpt || '',
-          summary: article.summary,
           category_id: article.category_id,
           created_at: article.created_at,
           published_at: article.published_at,
@@ -105,7 +101,7 @@ export const useNewsStore = defineStore('news', {
 
         this.hasMore = data.length === (this.currentPage === 1 ? 9 : this.loadMoreCount)
       } catch (error) {
-        console.error('Error fetching latest articles:', error)
+        console.error('Шинэ мэдээ татахад алдаа гарлаа:', error)
       } finally {
         this.loading = false
       }
@@ -117,35 +113,41 @@ export const useNewsStore = defineStore('news', {
           .from('news')
           .select('*, category:categories(*)')
           .eq('is_featured', true)
-          .eq('is_published', true)
-          .order('published_at', { ascending: false })
+          .order('featured_position', { ascending: true })
           .limit(4)
 
         if (error) throw error
 
-        this.featuredArticles = data.map((article: any) => ({
-          id: article.id,
-          title: article.title,
-          slug: article.slug,
-          content: article.content,
+        // Sort articles by featured_position (main article first, then small articles)
+        const sortedData = data.sort((a, b) => {
+          // If either position is null, put it at the end
+          if (a.featured_position === null) return 1
+          if (b.featured_position === null) return -1
+          return (a.featured_position ?? 99) - (b.featured_position ?? 99)
+        })
+
+        // Debug log
+        console.log('Онцлох мэдээнүүд:', sortedData.map(a => ({
+          title: a.title,
+          position: a.featured_position,
+          is_featured: a.is_featured
+        })))
+
+        this.featuredArticles = sortedData.map((article: any) => ({
+          ...article,
           excerpt: article.excerpt || '',
-          summary: article.summary,
-          category_id: article.category_id,
-          created_at: article.created_at,
-          published_at: article.published_at,
-          updated_at: article.updated_at,
-          likes: 0,
-          comments: 0,
+          likes: article.likes || 0,
+          comments: article.comments || 0,
           liked: false,
-          category: article.category,
           featured_image: article.featured_image?.startsWith('data:') ? 
-            article.featured_image : 
+            article.featured_image :
             article.featured_image ? 
-              `${this.config.public.supabaseUrl}/storage/v1/object/public/news/${article.featured_image}` : 
+              `${this.config.public.storageUrl}/${article.featured_image}` :
               '/placeholder-image.svg'
         }))
       } catch (error) {
-        console.error('Error fetching featured articles:', error)
+        console.error('Онцлох мэдээ татахад алдаа гарлаа:', error)
+        this.error = error instanceof Error ? error.message : 'Онцлох мэдээ татахад алдаа гарлаа'
       }
     },
 
@@ -168,7 +170,6 @@ export const useNewsStore = defineStore('news', {
           slug: article.slug,
           content: article.content,
           excerpt: article.excerpt || '',
-          summary: article.summary,
           category_id: article.category_id,
           created_at: article.created_at,
           published_at: article.published_at,
@@ -184,7 +185,7 @@ export const useNewsStore = defineStore('news', {
               '/placeholder-image.svg'
         }
       } catch (error) {
-        console.error('Error fetching article:', error)
+        console.error('Мэдээ татахад алдаа гарлаа:', error)
         throw error
       }
     },
@@ -194,7 +195,7 @@ export const useNewsStore = defineStore('news', {
         const { error } = await this.supabase.rpc('increment_views', { article_id: articleId })
         if (error) throw error
       } catch (error) {
-        console.error('Error incrementing views:', error)
+        console.error('Харсан тоо оруулахад алдаа гарлаа:', error)
       }
     },
 

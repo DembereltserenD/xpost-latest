@@ -71,18 +71,18 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue'
-import { createClient } from '@supabase/supabase-js'
-import { useRuntimeConfig, navigateTo } from '#imports'
+import { useSupabaseClient } from '#imports'
+import { navigateTo } from '#imports'
 
-const config = useRuntimeConfig()
-const supabase = createClient(
-  config.public.supabaseUrl,
-  config.public.supabaseKey
-)
+definePageMeta({
+  layout: 'auth',
+  ssr: false  // Enable CSR for authentication
+})
 
+const supabase = useSupabaseClient()
 const password = ref('')
 const confirmPassword = ref('')
-const error = ref('')
+const error = ref<string | null>(null)
 const loading = ref(false)
 const successMessage = ref('')
 
@@ -124,10 +124,4 @@ const handlePasswordReset = async () => {
     loading.value = false
   }
 }
-
-// Define the layout for this page
-definePageMeta({
-  layout: 'auth',
-  ssr: false  // Enable CSR for authentication
-})
 </script>

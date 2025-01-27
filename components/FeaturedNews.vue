@@ -1,30 +1,30 @@
 <template>
   <div class="featured-news">
     <div v-if="articles && articles.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-      <!-- Main featured article -->
+      <!-- Main featured article (position 0) -->
       <div class="md:col-span-2 featured-article">
-        <NuxtLink :to="`/news/${articles[0].slug}`" class="block">
+        <NuxtLink :to="`/news/${mainArticle.id}`" class="block" v-if="mainArticle">
           <div class="relative overflow-hidden rounded-lg bg-gray-800">
             <div class="relative aspect-video md:h-[482.5px]">
               <img 
-                :src="articles[0].featured_image" 
-                :alt="articles[0].title" 
+                :src="mainArticle.featured_image" 
+                :alt="mainArticle.title" 
                 class="w-full h-full object-cover"
                 loading="eager"
                 @error="handleImageError"
               />
               <div class="absolute inset-0 bg-gradient-to-t from-gray-900 via-gray-900/40"></div>
               <div class="absolute bottom-0 left-0 right-0 p-4 md:p-6">
-                <div v-if="articles[0].category?.name" class="mb-2 md:mb-4">
+                <div v-if="mainArticle.category?.name" class="mb-2 md:mb-4">
                   <span class="px-2 py-1 text-xs md:text-sm font-medium bg-red-500 text-white rounded-full">
-                    {{ articles[0].category?.name }}
+                    {{ mainArticle.category?.name }}
                   </span>
                 </div>
                 <h2 class="text-lg md:text-2xl font-bold text-white mb-2">
-                  {{ articles[0].title }}
+                  {{ mainArticle.title }}
                 </h2>
-                <p v-if="articles[0].excerpt" class="hidden md:block text-gray-200 text-sm">
-                  {{ articles[0].excerpt }}
+                <p v-if="mainArticle.excerpt" class="hidden md:block text-gray-200 text-sm">
+                  {{ mainArticle.excerpt }}
                 </p>
               </div>
             </div>
@@ -32,11 +32,11 @@
         </NuxtLink>
       </div>
 
-      <!-- Smaller featured articles -->
-      <div class="md:col-span-1" v-if="articles.length > 1">
+      <!-- Smaller featured articles (positions 1-3) -->
+      <div class="md:col-span-1" v-if="smallArticles.length > 0">
         <div class="grid grid-cols-1 gap-4">
-          <div v-for="article in articles.slice(1, 4)" :key="article.id" class="bg-gray-800 rounded-lg overflow-hidden">
-            <NuxtLink :to="`/news/${article.slug}`" class="block">
+          <div v-for="article in smallArticles" :key="article.id" class="bg-gray-800 rounded-lg overflow-hidden">
+            <NuxtLink :to="`/news/${article.id}`" class="block">
               <div class="relative aspect-video md:h-[150px]">
                 <img 
                   :src="article.featured_image" 
@@ -77,7 +77,7 @@
 
     <!-- Empty State -->
     <div v-else class="text-center py-6 md:py-8">
-      <p class="text-sm md:text-base text-gray-500 dark:text-gray-400">No featured articles available</p>
+      <p class="text-sm md:text-base text-gray-500 dark:text-gray-400">Онцолсон нийтлэл байхгүй</p>
     </div>
   </div>
 </template>
@@ -97,18 +97,26 @@ onMounted(async () => {
 
 const articles = computed(() => newsStore.featuredArticles);
 
+// Compute main article (position 0) and small articles (positions 1-3)
+const mainArticle = computed(() => {
+  // First try to find position 0
+  const position0Article = articles.value.find(a => a.featured_position === 0);
+  // If no position 0, use the first featured article
+  return position0Article || articles.value[0];
+});
+
+const smallArticles = computed(() => {
+  if (!mainArticle.value) return [];
+  return articles.value
+    .filter(a => a.id !== mainArticle.value.id)
+    .sort((a, b) => (a.featured_position || 99) - (b.featured_position || 99))
+    .slice(0, 3);
+});
+
 const defaultImage = '/placeholder-image.svg';
 
-const handleImageError = (e: Event) => {
-  const img = e.target as HTMLImageElement;
-  if (img.src !== defaultImage) {
-    img.src = defaultImage;
-  }
-};
-
-// Pre-load the default image
-if (typeof window !== 'undefined') {
-  const img = new Image();
+function handleImageError(event: Event) {
+  const img = event.target as HTMLImageElement;
   img.src = defaultImage;
 }
 </script>

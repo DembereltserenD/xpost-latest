@@ -1,6 +1,5 @@
 import { defineStore } from 'pinia'
-import { createClient } from '@supabase/supabase-js'
-import { useRuntimeConfig } from '#imports'
+import { useSupabaseClient } from '#imports'
 
 export interface Category {
   id: string
@@ -12,27 +11,19 @@ export interface Category {
 }
 
 export const useCategoryStore = defineStore('category', {
-  state: () => {
-    const config = useRuntimeConfig()
-    const supabase = createClient(
-      config.public.supabaseUrl,
-      config.public.supabaseKey
-    )
-
-    return {
-      categories: [] as Category[],
-      loading: false,
-      error: null as string | null,
-      currentCategory: null as Category | null,
-      supabase
-    }
-  },
+  state: () => ({
+    categories: [] as Category[],
+    loading: false,
+    error: null as string | null,
+    currentCategory: null as Category | null
+  }),
 
   actions: {
     async fetchCategories() {
       this.loading = true
       try {
-        const { data, error } = await this.supabase
+        const supabase = useSupabaseClient()
+        const { data, error } = await supabase
           .from('categories')
           .select('*')
           .order('name', { ascending: true })
@@ -50,7 +41,8 @@ export const useCategoryStore = defineStore('category', {
 
     async getCategoryBySlug(slug: string) {
       try {
-        const { data, error } = await this.supabase
+        const supabase = useSupabaseClient()
+        const { data, error } = await supabase
           .from('categories')
           .select('*')
           .eq('slug', slug)
@@ -69,7 +61,8 @@ export const useCategoryStore = defineStore('category', {
 
     async createCategory(category: Omit<Category, 'id' | 'created_at' | 'updated_at'>) {
       try {
-        const { data, error } = await this.supabase
+        const supabase = useSupabaseClient()
+        const { data, error } = await supabase
           .from('categories')
           .insert([category])
           .select()
@@ -88,7 +81,8 @@ export const useCategoryStore = defineStore('category', {
 
     async updateCategory(id: string, updates: Partial<Category>) {
       try {
-        const { data, error } = await this.supabase
+        const supabase = useSupabaseClient()
+        const { data, error } = await supabase
           .from('categories')
           .update(updates)
           .eq('id', id)
@@ -111,7 +105,8 @@ export const useCategoryStore = defineStore('category', {
 
     async deleteCategory(id: string) {
       try {
-        const { error } = await this.supabase
+        const supabase = useSupabaseClient()
+        const { error } = await supabase
           .from('categories')
           .delete()
           .eq('id', id)

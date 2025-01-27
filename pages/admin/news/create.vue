@@ -2,6 +2,21 @@
   <div class="min-h-screen bg-gray-50 dark:bg-gray-900">
     <div class="lg:pl-64">
       <div class="container mx-auto px-4 py-8">
+        <div v-if="error" class="mb-4 bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded relative" role="alert">
+          <strong class="font-bold">Алдаа!</strong>
+          <span class="block sm:inline">{{ error }}</span>
+          <button @click="error = null" class="absolute top-0 bottom-0 right-0 px-4 py-3">
+            <svg class="fill-current h-6 w-6 text-red-500" role="button" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20">
+              <title>Close</title>
+              <path d="M14.348 14.849a1.2 1.2 0 0 1-1.697 0L10 11.819l-2.651 3.029a1.2 1.2 0 1 1-1.697-1.697l2.758-3.15-2.759-3.152a1.2 1.2 0 1 1 1.697-1.697L10 8.183l2.651-3.031a1.2 1.2 0 1 1 1.697 1.697l-2.758 3.152 2.758 3.15a1.2 1.2 0 0 1 0 1.698z"/>
+            </svg>
+          </button>
+        </div>
+
+        <div v-if="loading" class="fixed inset-0 bg-gray-500 bg-opacity-75 flex items-center justify-center z-50">
+          <div class="animate-spin rounded-full h-32 w-32 border-b-2 border-white"></div>
+        </div>
+
         <div class="flex justify-between items-center mb-6">
           <h1 class="text-2xl font-bold text-gray-900 dark:text-white">Шинэ мэдээ</h1>
           <NuxtLink
@@ -137,12 +152,15 @@ import { getCategories, createNewsArticle } from '~/lib/supabaseClient'
 
 const router = useRouter()
 const categories = ref([])
+const error = ref(null)
+const loading = ref(false)
+
 const form = ref({
   title: '',
   content: '',
   excerpt: '',
   featured_image: '',
-  category_id: '',
+  category_id: null,
   status: 'draft',
   is_featured: false,
   is_published: false
@@ -157,24 +175,39 @@ const generateSlug = (title: string) => {
 
 const createNews = async () => {
   try {
+    loading.value = true
+    error.value = null
+
+    if (!form.value.category_id) {
+      throw new Error('Ангилал сонгоно уу')
+    }
+
     const newsData = {
       ...form.value,
       slug: generateSlug(form.value.title),
       published_at: form.value.is_published ? new Date().toISOString() : null,
+      featured_position: form.value.is_featured ? 0 : null
     }
 
     await createNewsArticle(newsData)
     router.push('/admin/news')
-  } catch (error) {
-    console.error('Error creating news:', error)
+  } catch (err) {
+    error.value = err.message || 'Мэдээ үүсгэхэд алдаа гарлаа'
+    console.error('Error creating news:', err)
+  } finally {
+    loading.value = false
   }
 }
 
 onMounted(async () => {
   try {
+    loading.value = true
     categories.value = await getCategories()
-  } catch (error) {
-    console.error('Error fetching categories:', error)
+  } catch (err) {
+    error.value = err.message || 'Ангилал татахад алдаа гарлаа'
+    console.error('Error fetching categories:', err)
+  } finally {
+    loading.value = false
   }
 })
 </script>

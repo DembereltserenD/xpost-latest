@@ -110,15 +110,9 @@
 <script setup lang="ts">
 import { ref, onMounted, watch } from 'vue'
 import { Chart, registerables } from 'chart.js'
-import { createClient } from '@supabase/supabase-js'
+import { useSupabaseClient } from '#imports'
 
-Chart.register(...registerables)
-
-const config = useRuntimeConfig()
-const supabase = createClient(
-  config.public.supabaseUrl,
-  config.public.supabaseKey
-)
+const supabase = useSupabaseClient()
 
 const categoryChartRef = ref(null)
 const timelineChartRef = ref(null)

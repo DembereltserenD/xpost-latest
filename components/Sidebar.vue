@@ -154,7 +154,7 @@ const fetchBreakingNews = async () => {
   try {
     const { data, error: supaError } = await supabase
       .from('posts')
-      .select('title, slug')
+      .select('title, id')
       .eq('is_breaking', true)
       .order('created_at', { ascending: false })
       .limit(3)
@@ -164,7 +164,7 @@ const fetchBreakingNews = async () => {
     if (data) {
       breakingNews.value = data.map(item => ({
         title: item.title,
-        link: `/news/${item.slug}`
+        link: `/news/${item.id}`
       }))
     }
   } catch (e: any) {
@@ -178,7 +178,7 @@ const fetchPopularNews = async () => {
   try {
     const { data, error: supaError } = await supabase
       .from('posts')
-      .select('title, slug, image_url, category, created_at')
+      .select('title, id, image_url, category, created_at')
       .order('views', { ascending: false })
       .limit(3)
 
@@ -188,7 +188,7 @@ const fetchPopularNews = async () => {
       popularNews.value = data.map(item => ({
         title: item.title,
         image: item.image_url || '/placeholder-image.jpg',
-        link: `/news/${item.slug}`,
+        link: `/news/${item.id}`,
         category: item.category,
         date: item.created_at
       }))

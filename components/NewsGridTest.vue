@@ -21,7 +21,7 @@
           class="bg-white dark:bg-gray-800 rounded-lg shadow-md overflow-hidden group hover:scale-[1.02] transition-all duration-200"
         >
           <div class="relative">
-            <NuxtLink :to="`/news/${article.slug}`">
+            <NuxtLink :to="`/news/${article.id}`">
               <img 
                 :src="article.image || '/placeholder-image.svg'" 
                 :alt="article.title"
@@ -43,7 +43,7 @@
             </div>
 
             <h2 class="font-bold text-xl text-gray-900 dark:text-white mb-3">
-              <NuxtLink :to="`/news/${article.slug}`" class="hover:text-red-500 transition-colors duration-200">
+              <NuxtLink :to="`/news/${article.id}`" class="hover:text-red-500 transition-colors duration-200">
                 {{ article.title }}
               </NuxtLink>
             </h2>
@@ -110,10 +110,10 @@ const shareArticle = (article: Article) => {
     navigator.share({
       title: article.title,
       text: article.excerpt || '',
-      url: window.location.origin + '/news/' + article.slug
+      url: window.location.origin + '/news/' + article.id
     }).catch((error) => console.log('Error sharing:', error));
   } else {
-    const url = window.location.origin + '/news/' + article.slug;
+    const url = window.location.origin + '/news/' + article.id;
     navigator.clipboard.writeText(url)
       .then(() => alert('Link copied to clipboard!'))
       .catch((error) => console.log('Error copying to clipboard:', error));

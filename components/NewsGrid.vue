@@ -2,7 +2,7 @@
   <div class="news-grid">
     <div v-if="newsStore.latestArticles.length > 0" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
       <div v-for="article in newsStore.latestArticles" :key="article.id" class="bg-gray-800 rounded-lg overflow-hidden">
-        <NuxtLink :to="`/news/${article.slug}`" class="block">
+        <NuxtLink :to="`/news/${article.id}`" class="block">
           <div class="relative h-[200px] sm:h-[250px] lg:h-[300px]">
             <img 
               :src="article.featured_image" 

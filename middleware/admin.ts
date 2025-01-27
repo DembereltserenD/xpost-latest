@@ -1,11 +1,7 @@
-import { createClient } from '@supabase/supabase-js'
+import { useSupabaseClient } from '#imports'
 
 export default defineNuxtRouteMiddleware(async (to) => {
-  const config = useRuntimeConfig()
-  const supabase = createClient(
-    config.public.supabaseUrl,
-    config.public.supabaseKey
-  )
+  const supabase = useSupabaseClient()
 
   // Get current session
   const { data: { session } } = await supabase.auth.getSession()
