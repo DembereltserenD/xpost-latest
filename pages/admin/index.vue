@@ -253,6 +253,11 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({
+  layout: 'admin',
+  middleware: ['auth']
+})
+
 import { ref, onMounted, computed } from 'vue'
 import { useSupabaseClient } from '#imports'
 import { 
@@ -289,12 +294,6 @@ ChartJS.register(
   Filler,
   ArcElement
 )
-
-definePageMeta({
-  ssr: false,  // Enable CSR for admin dashboard
-  middleware: ['auth', 'admin'],
-  layout: 'admin'
-})
 
 const supabase = useSupabaseClient()
 const userEmail = ref('Admin')

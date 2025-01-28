@@ -91,7 +91,7 @@
     ></div>
 
     <!-- Main Content -->
-    <div class="lg:pl-64">
+    <div class="lg:pl-64 flex-1">
       <!-- Top Navigation -->
       <nav class="fixed top-0 right-0 left-0 lg:left-64 h-16 bg-white dark:bg-gray-800 shadow-sm z-10">
         <div class="px-4 h-full flex items-center justify-between">
@@ -155,7 +155,7 @@
 
       <!-- Page Content -->
       <main class="pt-16 min-h-screen">
-        <div class="p-4 sm:p-6 lg:p-8">
+        <div class="px-4">
           <slot />
         </div>
       </main>

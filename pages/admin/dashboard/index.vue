@@ -193,6 +193,11 @@
 </template>
 
 <script setup lang="ts">
+definePageMeta({
+  layout: 'admin',
+  middleware: ['auth', 'admin']
+})
+
 import { ref, onMounted, computed } from 'vue'
 import { useSupabaseClient } from '#imports'
 import {
@@ -214,11 +219,6 @@ import {
   EyeIcon,
   FolderIcon
 } from '@heroicons/vue/24/outline'
-
-definePageMeta({
-  layout: 'admin',
-  middleware: ['admin']
-})
 
 // Register ChartJS components
 ChartJS.register(

@@ -98,26 +98,6 @@
               </div>
             </div>
 
-            <div class="flex items-center space-x-4">
-              <label class="flex items-center">
-                <input
-                  v-model="form.is_featured"
-                  type="checkbox"
-                  class="rounded border-gray-300 text-blue-500 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Онцлох мэдээ</span>
-              </label>
-
-              <label class="flex items-center">
-                <input
-                  v-model="form.is_published"
-                  type="checkbox"
-                  class="rounded border-gray-300 text-blue-500 shadow-sm focus:border-blue-500 focus:ring-blue-500"
-                />
-                <span class="ml-2 text-sm text-gray-700 dark:text-gray-300">Одоо нийтлэх</span>
-              </label>
-            </div>
-
             <div class="flex justify-end space-x-4">
               <button
                 type="button"
@@ -148,9 +128,11 @@ definePageMeta({
 
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { useSupabaseUser } from '#imports'
 import { getCategories, createNewsArticle } from '~/lib/supabaseClient'
 
 const router = useRouter()
+const user = useSupabaseUser()
 const categories = ref([])
 const error = ref(null)
 const loading = ref(false)
@@ -162,8 +144,9 @@ const form = ref({
   featured_image: '',
   category_id: null,
   status: 'draft',
-  is_featured: false,
-  is_published: false
+  views: 0,
+  shares: 0,
+  likes: 0
 })
 
 const generateSlug = (title: string) => {
@@ -185,8 +168,15 @@ const createNews = async () => {
     const newsData = {
       ...form.value,
       slug: generateSlug(form.value.title),
-      published_at: form.value.is_published ? new Date().toISOString() : null,
-      featured_position: form.value.is_featured ? 0 : null
+      author_id: user.value?.id,
+      user_id: user.value?.id,
+      views: 0,
+      shares: 0,
+      likes: 0,
+      is_featured: false,
+      is_published: false,
+      published_at: null,
+      featured_position: null
     }
 
     await createNewsArticle(newsData)
@@ -201,13 +191,10 @@ const createNews = async () => {
 
 onMounted(async () => {
   try {
-    loading.value = true
     categories.value = await getCategories()
   } catch (err) {
-    error.value = err.message || 'Ангилал татахад алдаа гарлаа'
-    console.error('Error fetching categories:', err)
-  } finally {
-    loading.value = false
+    error.value = err.message || 'Ангилал ачаалахад алдаа гарлаа'
+    console.error('Error loading categories:', err)
   }
 })
 </script>

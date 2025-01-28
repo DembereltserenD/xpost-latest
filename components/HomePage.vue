@@ -39,26 +39,21 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { Clock } from 'lucide-vue-next'
-import { useNewsStore } from '~/stores/news'
-import { storeToRefs } from 'pinia'
-import Sidebar from '~/components/Sidebar.vue'
-import NewsGrid from '~/components/NewsGrid.vue'
-import FeaturedNews from '~/components/FeaturedNews.vue'
-import SkeletonLoader from '~/components/SkeletonLoader.vue'
+import { useNewsStore } from '@/stores/news'
+import FeaturedNews from '@/components/FeaturedNews.vue'
+import NewsGrid from '@/components/NewsGrid.vue'
+import SkeletonLoader from '@/components/SkeletonLoader.vue'
 
+const loading = ref(true)
+const error = ref<string | null>(null)
 const newsStore = useNewsStore()
-const loading = ref(false)
 
 onMounted(async () => {
-  loading.value = true
   try {
-    await Promise.all([
-      newsStore.fetchLatestArticles(),
-      newsStore.fetchFeaturedArticles()
-    ])
-  } catch (error) {
-    console.error('Error loading articles:', error)
+    await newsStore.initialize()
+  } catch (err) {
+    error.value = 'Failed to load news'
+    console.error('Error loading news:', err)
   } finally {
     loading.value = false
   }
