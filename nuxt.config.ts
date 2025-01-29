@@ -70,8 +70,6 @@ export default defineNuxtConfig({
     preset: "node-server",
   },
 
-  ssr: false,
-
   tailwindcss: {
     config: {
       darkMode: "class",

@@ -44,13 +44,9 @@
                   :key="header.value"
                   scope="col" 
                   class="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-300 uppercase tracking-wider cursor-pointer hover:text-gray-700 dark:hover:text-white transition-colors duration-200"
-                  @click="$emit('update:sort', header.value)"
                 >
                   <div class="flex items-center gap-1">
                     {{ header.text }}
-                    <svg v-if="sortField === header.value" class="w-4 h-4" :class="{ 'rotate-180': sortDirection === 'desc' }" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
-                    </svg>
                   </div>
                 </th>
                 <th scope="col" class="relative px-4 py-3 w-48">
@@ -58,19 +54,22 @@
                 </th>
               </tr>
             </thead>
-            <tbody class="divide-y divide-gray-200 dark:divide-gray-700">
+            <tbody class="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
               <tr 
-                v-for="item in sortedNews" 
-                :key="item.id" 
-                class="group hover:bg-gray-50 dark:hover:bg-gray-700/50 transition-colors duration-200"
-                :class="{ 'bg-yellow-50/80 dark:bg-yellow-400/5': item.is_featured }"
+                v-for="news in sortedNews" 
+                :key="news.id" 
+                :class="[
+                  'hover:bg-gray-50 dark:hover:bg-gray-700/50',
+                  news.is_featured && news.featured_position === 0 ? 'bg-yellow-50/50 dark:bg-yellow-500/5' : '',
+                  news.is_featured && news.featured_position !== 0 ? 'bg-green-50/80 dark:bg-green-500/5' : ''
+                ]"
               >
                 <td class="px-4 py-3 whitespace-nowrap">
                   <input
                     type="checkbox"
-                    :value="item.id"
-                    :checked="selectedItems.includes(item.id)"
-                    @change="toggleSelection(item.id)"
+                    :value="news.id"
+                    :checked="selectedItems.includes(news.id)"
+                    @change="toggleSelection(news.id)"
                     class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
                   >
                 </td>
@@ -81,46 +80,65 @@
                     </div>
                     <div class="ml-4">
                       <div class="text-sm font-medium text-gray-900 dark:text-white">
-                        {{ item.title }}
+                        {{ news.title }}
                       </div>
                       <div class="text-sm text-gray-500 dark:text-gray-400">
-                        {{ item.excerpt }}
+                        {{ news.excerpt }}
                       </div>
                     </div>
                   </div>
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap">
-                  <span :class="getCategoryClasses(item.category?.name || 'Ангилалгүй')">
-                    {{ item.category?.name || 'Ангилалгүй' }}
+                  <span :class="getCategoryClasses(news.category?.name || 'Ангилалгүй')">
+                    {{ news.category?.name || 'Ангилалгүй' }}
                   </span>
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                  {{ formatDateTime(item.created_at) }}
+                  {{ formatDateTime(news.created_at) }}
                 </td>
                 <td class="px-4 py-3 whitespace-nowrap text-right">
                   <div class="flex items-center justify-end space-x-2">
+                    <!-- Featured position buttons -->
+                    <template v-if="!news.is_featured">
+                      <button 
+                        @click="$emit('set-featured-position', news, 0)"
+                        class="text-gray-400 hover:text-yellow-500 transition-colors duration-200"
+                        title="Том онцлох мэдээнд нэмэх"
+                      >
+                        <Star class="w-5 h-5" />
+                      </button>
+                      <button 
+                        v-for="position in [1, 2, 3]"
+                        :key="position"
+                        @click="$emit('set-featured-position', news, position)"
+                        class="text-gray-400 hover:text-green-600 transition-colors duration-200"
+                        :title="'Жижиг онцлох ' + position + ' -д нэмэх'"
+                      >
+                        {{ position }}
+                      </button>
+                    </template>
+                    <!-- Remove from featured button -->
                     <button 
-                      v-if="!item.is_featured"
-                      @click="setFeaturedPosition(item, getNextSmallPosition())"
-                      class="text-gray-400 hover:text-yellow-500 transition-colors duration-200"
+                      v-else
+                      @click="$emit('remove-featured', news)"
+                      :class="[
+                        'transition-colors duration-200',
+                        news.featured_position === 0 
+                          ? 'text-yellow-500 hover:text-yellow-600'
+                          : 'text-green-500 hover:text-green-600'
+                      ]"
+                      :title="news.featured_position === 0 ? 'Том онцлохоос хасах' : 'Жижиг онцлохоос хасах'"
                     >
                       <Star class="w-5 h-5" />
                     </button>
                     <button 
-                      v-else
-                      @click="removeFeatured(item)"
-                      class="text-yellow-500 hover:text-yellow-600 transition-colors duration-200"
-                    >
-                      <StarOff class="w-5 h-5" />
-                    </button>
-                    <button 
-                      @click="$emit('edit-news', item.id)"
+                      @click="$emit('edit-news', news.id)"
                       class="text-gray-400 hover:text-blue-600 transition-colors duration-200"
                     >
                       <Edit class="w-5 h-5" />
                     </button>
                     <button 
-                      @click="deleteNews(item.id)"
+                      @click="deleteNews(news.id)"
                       class="text-gray-400 hover:text-red-500 transition-colors duration-200"
                     >
                       <Trash2 class="w-5 h-5" />
@@ -136,15 +154,23 @@
       <!-- Mobile View -->
       <div class="lg:hidden">
         <div class="divide-y divide-gray-200 dark:divide-gray-700">
-          <div v-for="item in sortedNews" :key="item.id" class="p-4">
+          <div 
+            v-for="news in sortedNews" 
+            :key="news.id"
+            :class="[
+              'p-4 hover:bg-gray-50 dark:hover:bg-gray-700/50',
+              news.is_featured && news.featured_position === 0 ? 'bg-yellow-50/50 dark:bg-yellow-500/5' : '',
+              news.is_featured && news.featured_position !== 0 ? 'bg-green-50/80 dark:bg-green-500/5' : ''
+            ]"
+          >
             <div class="flex items-start gap-4">
               <!-- Checkbox and Image -->
               <div class="flex items-center gap-3">
                 <input
                   type="checkbox"
-                  :value="item.id"
-                  :checked="selectedItems.includes(item.id)"
-                  @change="toggleSelection(item.id)"
+                  :value="news.id"
+                  :checked="selectedItems.includes(news.id)"
+                  @change="toggleSelection(news.id)"
                   class="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded cursor-pointer"
                 >
                 <div class="h-12 w-12 rounded-lg bg-gray-200 dark:bg-gray-700"></div>
@@ -154,12 +180,24 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-start justify-between gap-4">
                   <div>
-                    <h3 class="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">{{ item.title }}</h3>
-                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{{ item.excerpt }}</p>
+                    <div class="flex items-center gap-2">
+                      <h3 class="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">{{ news.title }}</h3>
+                      <span v-if="news.is_featured" 
+                            :class="[
+                              'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
+                              news.featured_position === 0 
+                                ? 'bg-yellow-100 text-yellow-800 dark:bg-yellow-500/20 dark:text-yellow-400'
+                                : 'bg-green-100 text-green-800 dark:bg-green-500/20 dark:text-green-400'
+                            ]">
+                        <Star class="w-3 h-3 mr-1" />
+                        {{ news.featured_position === 0 ? 'Том онцлох' : `Жижиг онцлох ${news.featured_position}` }}
+                      </span>
+                    </div>
+                    <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{{ news.excerpt }}</p>
                   </div>
                   <div class="flex-shrink-0">
                     <button
-                      @click="toggleMenu(item)"
+                      @click="toggleMenu(news)"
                       class="p-1 text-gray-400 hover:text-gray-500 dark:hover:text-gray-300 rounded-full hover:bg-gray-100 dark:hover:bg-gray-700"
                     >
                       <MoreVertical class="h-5 w-5" />
@@ -168,39 +206,53 @@
                 </div>
 
                 <div class="mt-2 flex flex-wrap items-center gap-2">
-                  <span :class="getCategoryClasses(item.category?.name || 'Ангилалгүй')">{{ item.category?.name || 'Ангилалгүй' }}</span>
+                  <span :class="getCategoryClasses(news.category?.name || 'Ангилалгүй')">{{ news.category?.name || 'Ангилалгүй' }}</span>
                   <span class="text-xs text-gray-500 dark:text-gray-400">
-                    {{ formatDateTime(item.created_at) }}
+                    {{ formatDateTime(news.created_at) }}
                   </span>
                 </div>
 
                 <!-- Mobile Actions -->
-                <div v-if="activeMenu === item.id" class="mt-3 flex flex-wrap gap-2">
-                  <button
-                    v-if="!item.is_featured"
-                    @click="setFeaturedPosition(item, getNextSmallPosition())"
-                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-yellow-700 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:hover:bg-yellow-900/40 transition-colors duration-200"
+                <div v-if="activeMenu === news.id" class="mt-3 flex flex-wrap gap-2">
+                  <template v-if="!news.is_featured">
+                    <button 
+                      @click="$emit('set-featured-position', news, 0)"
+                      class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-yellow-700 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:hover:bg-yellow-900/40 transition-colors duration-200"
+                    >
+                      <Star class="w-4 h-4 mr-1" />
+                      Том онцлох
+                    </button>
+                    <button 
+                      v-for="position in [1, 2, 3]"
+                      :key="position"
+                      @click="$emit('set-featured-position', news, position)"
+                      class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-green-700 bg-green-100 hover:bg-green-200 dark:bg-green-900/20 dark:text-green-400 dark:hover:bg-green-900/40 transition-colors duration-200"
+                    >
+                      Жижиг онцлох {{ position }}
+                    </button>
+                  </template>
+                  <button 
+                    v-else
+                    @click="$emit('remove-featured', news)"
+                    :class="[
+                      'transition-colors duration-200',
+                      news.featured_position === 0 
+                        ? 'text-yellow-500 hover:text-yellow-600'
+                        : 'text-green-500 hover:text-green-600'
+                    ]"
+                    :title="news.featured_position === 0 ? 'Том онцлохоос хасах' : 'Жижиг онцлохоос хасах'"
                   >
-                    <Star class="w-4 h-4 mr-1" />
-                    Жижиг онцлох
+                    <Star class="w-5 h-5" />
                   </button>
                   <button
-                    v-if="item.is_featured"
-                    @click="removeFeatured(item)"
-                    class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-gray-700 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:text-gray-300 dark:hover:bg-gray-600 transition-colors duration-200"
-                  >
-                    <StarOff class="w-4 h-4 mr-1" />
-                    Хасах
-                  </button>
-                  <button
-                    @click="$emit('edit-news', item.id)"
+                    @click="$emit('edit-news', news.id)"
                     class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-blue-700 bg-blue-100 hover:bg-blue-200 dark:bg-blue-900/20 dark:text-blue-400 dark:hover:bg-blue-900/40 transition-colors duration-200"
                   >
                     <Edit class="w-4 h-4 mr-1" />
                     Засах
                   </button>
                   <button
-                    @click="deleteNews(item.id)"
+                    @click="deleteNews(news.id)"
                     class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-red-700 bg-red-100 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 transition-colors duration-200"
                   >
                     <Trash2 class="w-4 h-4 mr-1" />
@@ -260,8 +312,6 @@ interface NewsArticle {
 interface Props {
   news: NewsArticle[]
   loading?: boolean
-  sortField?: string
-  sortDirection?: 'asc' | 'desc'
   selectedItems: string[]
   filters: {
     search?: string
@@ -275,17 +325,15 @@ const props = defineProps<Props>()
 
 const emit = defineEmits<{
   'update:selectedItems': [items: string[]]
-  'update:sort': [field: string]
   'bulk-delete': []
-  'setFeatured': [news: NewsArticle, position: number]
-  'removeFeatured': [news: NewsArticle]
-  'delete': [id: string]
+  'set-featured-position': [news: NewsArticle, position: number]
+  'remove-featured': [news: NewsArticle]
+  'delete-news': [id: string]
   'edit-news': [id: string]
 }>()
 
-const sortedNews = computed(() => {
-  return props.news
-})
+// Simply use props.news directly
+const sortedNews = computed(() => props.news)
 
 const headers = [
   { text: 'Мэдээ', value: 'title' },
@@ -321,22 +369,15 @@ const toggleMenu = (news: NewsArticle) => {
 }
 
 const setFeaturedPosition = (news: NewsArticle, position: number) => {
-  emit('setFeatured', news, position)
+  emit('set-featured-position', news, position)
 }
 
 const removeFeatured = (news: NewsArticle) => {
-  emit('removeFeatured', news)
+  emit('remove-featured', news)
 }
 
 const deleteNews = (id: string) => {
-  emit('delete', id)
-}
-
-const getNextSmallPosition = () => {
-  const smallPositions = props.news
-    .filter(n => n.is_featured && n.featured_position !== 0)
-    .map(n => n.featured_position || 0)
-  return Math.max(1, ...smallPositions) + 1
+  emit('delete-news', id)
 }
 
 const formatDateTime = (date: string) => {

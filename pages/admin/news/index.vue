@@ -128,11 +128,13 @@
         />
 
         <!-- Featured News -->
-        <FeaturedNews
-          :news="featuredNews"
-          @remove-featured="removeFeatured"
-          @set-featured-position="setFeaturedPosition"
-        />
+        <div class="mb-8">
+          <FeaturedNews
+            :news="featuredNews"
+            @remove-featured="removeFeatured"
+            @set-featured-position="setFeaturedPosition"
+          />
+        </div>
 
         <!-- News List -->
         <NewsList
@@ -203,7 +205,13 @@ const todayCount = computed(() => {
 
 // Computed properties for news items
 const filteredNews = computed(() => {
-  return newsItems.value.filter(item => !item.is_featured)
+  // First, get featured and non-featured news separately
+  const featured = newsItems.value.filter(item => item.is_featured)
+    .sort((a, b) => (a.featured_position || 0) - (b.featured_position || 0))
+  const nonFeatured = newsItems.value.filter(item => !item.is_featured)
+
+  // Combine them with featured at top
+  return [...featured, ...nonFeatured]
 })
 
 const featuredNews = computed(() => {
@@ -270,23 +278,7 @@ const fetchNews = async () => {
     loading.value = true
     error.value = null
     
-    // Fetch featured news separately
-    const { data: featuredData, error: featuredError } = await supabase
-      .from('news')
-      .select(`
-        *,
-        category:categories(
-          id,
-          name,
-          slug
-        )
-      `)
-      .eq('is_featured', true)
-      .order('featured_position', { ascending: true })
-
-    if (featuredError) throw featuredError
-
-    // Fetch filtered news
+    // Single query that handles both featured and non-featured news
     let query = supabase
       .from('news')
       .select(`
@@ -297,11 +289,15 @@ const fetchNews = async () => {
           slug
         )
       `)
-      .eq('is_featured', false)
       
     // Apply filters
     if (filters.value.category) {
       query = query.eq('category_id', filters.value.category)
+    }
+
+    // Apply featured filter if specified
+    if (filters.value.featured !== null) {
+      query = query.eq('is_featured', filters.value.featured)
     }
 
     // Apply date range filter
@@ -333,20 +329,23 @@ const fetchNews = async () => {
       query = query.ilike('title', `%${filters.value.search}%`)
     }
     
-    // Apply sorting
-    if (sortField.value) {
-      query = query.order(sortField.value, { ascending: sortDirection.value === 'asc' })
+    // Apply sorting with featured news always at top
+    if (sortField.value && sortField.value !== 'featured_position') {
+      query = query.order('is_featured', { ascending: false })
+            .order('featured_position', { ascending: true, nullsLast: true })
+            .order(sortField.value, { ascending: sortDirection.value === 'asc' })
     } else {
-      // Default sorting by created_at desc
-      query = query.order('created_at', { ascending: false })
+      // Default sorting: featured first, then by created_at
+      query = query.order('is_featured', { ascending: false })
+            .order('featured_position', { ascending: true, nullsLast: true })
+            .order('created_at', { ascending: false })
     }
 
     const { data: newsData, error: newsError } = await query
 
     if (newsError) throw newsError
     
-    // Combine both results
-    newsItems.value = [...(featuredData || []), ...(newsData || [])]
+    newsItems.value = newsData || []
     console.log('Fetched news:', newsItems.value)
   } catch (err) {
     handleError(err, 'Мэдээний жагсаалтыг татах үед алдаа гарлаа')
@@ -356,28 +355,57 @@ const fetchNews = async () => {
 }
 
 // Featured news management with error handling
-const setFeaturedPosition = async (news: NewsArticle, position: number) => {
+const setFeaturedPosition = async (news: NewsArticle, newPosition: number) => {
   try {
-    // Check featured limit
-    if (!news.is_featured && featuredCount.value >= 4) {
-      error.value = 'Онцлох мэдээний тоо хязгаарт хүрсэн байна (4)'
-      return
+    // Validate position range (0-3)
+    if (newPosition < 0 || newPosition > 3) {
+      throw new Error('Invalid featured position. Must be between 0 and 3.')
     }
 
+    // Find the article currently in the target position
+    const articleInTargetPosition = newsItems.value.find(
+      n => n.is_featured && n.featured_position === newPosition
+    )
+
+    // Start a transaction to ensure atomic updates
+    if (articleInTargetPosition) {
+      // If moving from one featured position to another
+      if (news.is_featured) {
+        const { error: swapError } = await supabase
+          .from('news')
+          .update({ featured_position: news.featured_position })
+          .eq('id', articleInTargetPosition.id)
+
+        if (swapError) throw swapError
+      } else {
+        // If making a non-featured news featured, just move the existing one out
+        const { error: swapError } = await supabase
+          .from('news')
+          .update({ 
+            is_featured: false,
+            featured_position: null 
+          })
+          .eq('id', articleInTargetPosition.id)
+
+        if (swapError) throw swapError
+      }
+    }
+
+    // Update the selected article's position
     const { error: updateError } = await supabase
       .from('news')
       .update({ 
         is_featured: true,
-        featured_position: position 
+        featured_position: newPosition 
       })
       .eq('id', news.id)
 
     if (updateError) throw updateError
 
     await fetchNews()
-    showSuccess('Онцлох мэдээ амжилттай тохируулагдлаа')
+    showSuccess('Онцлох мэдээний байрлал амжилттай солигдлоо')
   } catch (err) {
-    handleError(err, 'Онцлох мэдээ тохируулах үед алдаа гарлаа')
+    handleError(err, 'Онцлох мэдээний байрлал солих үед алдаа гарлаа')
   }
 }
 

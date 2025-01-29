@@ -142,7 +142,7 @@ export const useNewsStore = defineStore('news', {
           featured_image: article.featured_image?.startsWith('data:') ? 
             article.featured_image :
             article.featured_image ? 
-              `${this.config.public.storageUrl}/${article.featured_image}` :
+              `${this.config.public.supabaseUrl}/storage/v1/object/public/news/${article.featured_image}` :
               '/placeholder-image.svg'
         }))
       } catch (error) {
