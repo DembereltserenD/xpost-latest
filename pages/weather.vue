@@ -223,8 +223,8 @@ definePageMeta({
   ssr: false  // Enable CSR for dynamic weather updates
 })
 
-import { ref, computed } from 'vue'
-import { useWeatherStore } from '~/stores/weather'
+import { ref, computed, onMounted } from 'vue'
+import { useWeatherStore } from '~/composables/useWeatherStore'
 import { 
   MapPin, 
   AlertCircle,
@@ -367,10 +367,12 @@ const retryFetch = () => {
   weatherStore.fetchWeatherInfo()
 }
 
-// Initial fetch
-if (!weatherStore.currentWeather) {
-  weatherStore.fetchWeatherInfo()
-}
+// Move initial fetch to onMounted
+onMounted(() => {
+  if (!weatherStore.currentWeather) {
+    weatherStore.fetchWeatherInfo()
+  }
+})
 </script>
 
 <style scoped>

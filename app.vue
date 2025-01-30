@@ -1,6 +1,6 @@
 <template>
   <NuxtLayout>
-    <div :class="['app-wrapper', colorMode.value, { 'menu-open': isMobileMenuOpen }]">
+    <div class="app-wrapper" :class="[colorMode.preference]">
       <ClientOnly>
         <template v-if="!isAdminOrAuthRoute">
           <Ticker />
@@ -22,7 +22,7 @@
 </template>
 
 <script setup lang="ts">
-import { watch, computed, ref } from 'vue'
+import { watch, computed, ref, onMounted } from 'vue'
 import { useColorMode } from '#imports'
 import { useRoute } from 'vue-router'
 import { useNuxtApp } from '#app'
@@ -44,6 +44,15 @@ const isAdminOrAuthRoute = computed(() => {
          path === '/auth/reset-password'
 })
 
+// Initialize color mode on client side
+onMounted(() => {
+  const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
+  const savedMode = localStorage.getItem('nuxt-color-mode')
+  if (!savedMode) {
+    colorMode.preference = prefersDark ? 'dark' : 'system'
+  }
+})
+
 const handleMenuToggle = (isOpen: boolean) => {
   isMobileMenuOpen.value = isOpen;
   if (process.client) {
@@ -52,9 +61,9 @@ const handleMenuToggle = (isOpen: boolean) => {
 }
 
 // Watch for color mode changes and update HTML class
-watch(() => colorMode.value, (newValue) => {
+watch(() => colorMode.preference, (newValue) => {
   if (process.client) {
-    document.documentElement.classList.remove('light', 'dark')
+    document.documentElement.classList.remove('light', 'dark', 'system')
     document.documentElement.classList.add(newValue)
   }
 }, { immediate: true })
