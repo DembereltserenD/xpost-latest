@@ -1,4 +1,5 @@
 <template>
+<div class="admin-news-container">
   <div>
     <div class="max-w-full mx-auto">
       <!-- Error Alert -->
@@ -116,7 +117,7 @@
         <!-- Stats -->
         <NewsStats 
           :total-count="newsItems.length"
-          :featured-count="featuredCount"
+          :draft-count="draftCount"
           :today-count="todayCount"
         />
 
@@ -144,7 +145,7 @@
           :sort-direction="sortDirection"
           v-model:selected-items="selectedItems"
           @update:sort="toggleSort"
-          @delete="deleteNews"
+          @delete-news="deleteNews"
           @bulk-delete="openDeleteModal"
           @set-featured-position="setFeaturedPosition"
           @remove-featured="removeFeatured"
@@ -152,6 +153,7 @@
       </div>
     </div>
   </div>
+   </div>
 </template>
 
 <script setup lang="ts">
@@ -190,8 +192,8 @@ const filters = ref({
 })
 
 // Computed properties for stats
-const featuredCount = computed(() => 
-  newsItems.value.filter(n => n.is_featured).length
+const draftCount = computed(() => 
+  newsItems.value.filter(n => !n.is_published).length
 )
 
 const todayCount = computed(() => {
@@ -357,55 +359,25 @@ const fetchNews = async () => {
 // Featured news management with error handling
 const setFeaturedPosition = async (news: NewsArticle, newPosition: number) => {
   try {
-    // Validate position range (0-3)
-    if (newPosition < 0 || newPosition > 3) {
-      throw new Error('Invalid featured position. Must be between 0 and 3.')
+    if (!news.is_published) {
+      handleError(null, 'Ноорог мэдээг онцлох боломжгүй. Эхлээд нийтлэх шаардлагатай.')
+      return
     }
 
-    // Find the article currently in the target position
-    const articleInTargetPosition = newsItems.value.find(
-      n => n.is_featured && n.featured_position === newPosition
-    )
-
-    // Start a transaction to ensure atomic updates
-    if (articleInTargetPosition) {
-      // If moving from one featured position to another
-      if (news.is_featured) {
-        const { error: swapError } = await supabase
-          .from('news')
-          .update({ featured_position: news.featured_position })
-          .eq('id', articleInTargetPosition.id)
-
-        if (swapError) throw swapError
-      } else {
-        // If making a non-featured news featured, just move the existing one out
-        const { error: swapError } = await supabase
-          .from('news')
-          .update({ 
-            is_featured: false,
-            featured_position: null 
-          })
-          .eq('id', articleInTargetPosition.id)
-
-        if (swapError) throw swapError
-      }
-    }
-
-    // Update the selected article's position
     const { error: updateError } = await supabase
       .from('news')
-      .update({ 
+      .update({
         is_featured: true,
-        featured_position: newPosition 
+        featured_position: newPosition
       })
       .eq('id', news.id)
 
     if (updateError) throw updateError
 
     await fetchNews()
-    showSuccess('Онцлох мэдээний байрлал амжилттай солигдлоо')
+    showSuccess('Онцлох мэдээний байрлал амжилттай өөрчлөгдлөө')
   } catch (err) {
-    handleError(err, 'Онцлох мэдээний байрлал солих үед алдаа гарлаа')
+    handleError(err, 'Онцлох мэдээний байрлал өөрчлөх үед алдаа гарлаа')
   }
 }
 
@@ -478,14 +450,47 @@ const confirmBulkDelete = async () => {
   }
 }
 
+// Function to check and generate missing short IDs
+async function checkMissingShortIds() {
+  try {
+    const { data: newsWithoutShortIds, error: fetchError } = await supabase
+      .from('news')
+      .select('id')
+      .is('short_id', null)
+
+    if (fetchError) throw fetchError
+
+    if (newsWithoutShortIds && newsWithoutShortIds.length > 0) {
+      for (const news of newsWithoutShortIds) {
+        const shortId = Math.random().toString(36).substring(2, 8)
+        const { error: updateError } = await supabase
+          .from('news')
+          .update({ short_id: shortId })
+          .eq('id', news.id)
+
+        if (updateError) throw updateError
+      }
+      console.log(`Generated short IDs for ${newsWithoutShortIds.length} news articles`)
+    }
+  } catch (err) {
+    handleError(err, 'Богино ID шалгах/үүсгэх үед алдаа гарлаа')
+  }
+}
+
 onMounted(async () => {
   console.log('Component mounted, fetching initial data...')
   await fetchCategories()
+  await checkMissingShortIds()
   fetchNews()
 })
 </script>
 
 <style>
+.admin-news-container {
+  max-width: var(--max-width);
+  margin: 0 auto;
+  padding: 0 1rem;
+}
 .fade-enter-active,
 .fade-leave-active {
   transition: opacity 0.3s ease;

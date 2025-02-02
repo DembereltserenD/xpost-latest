@@ -65,19 +65,28 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import { useSupabaseClient } from '#imports'
+import { ref, onMounted } from 'vue'
+import { useSupabaseClient, useRoute } from '#imports'
 
 definePageMeta({
   layout: 'auth',
   ssr: false  // Enable CSR for authentication
 })
 
+const route = useRoute()
 const supabase = useSupabaseClient()
 const email = ref('')
 const loading = ref(false)
 const error = ref<string | null>(null)
 const successMessage = ref('')
+
+// Handle pre-filled email from query parameters
+onMounted(() => {
+  const emailFromQuery = route.query.email as string
+  if (emailFromQuery) {
+    email.value = decodeURIComponent(emailFromQuery)
+  }
+})
 
 const handleResetPassword = async () => {
   try {
@@ -95,7 +104,10 @@ const handleResetPassword = async () => {
     if (resetError) throw resetError
 
     successMessage.value = 'Нууц үг сэргээх холбоос таны имэйл хаяг руу илгээгдлээ'
-    email.value = '' // Clear the email input
+    if (!route.query.email) {
+      // Only clear email if it wasn't pre-filled from admin panel
+      email.value = ''
+    }
   } catch (err: any) {
     console.error('Password reset error:', err)
     error.value = err.message || 'Нууц үг сэргээх үед алдаа гарлаа'

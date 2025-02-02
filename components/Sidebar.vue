@@ -101,7 +101,7 @@
         <div class="p-2">
           <div class="space-y-1">
             <NuxtLink v-for="(category, index) in categories" :key="index" 
-                      :to="category.link"
+                      :to="category.slug"
                       class="flex items-center justify-between px-4 py-2 rounded-lg text-sm text-gray-700 hover:bg-gray-50 hover:text-primary-600 transition-colors dark:text-gray-300 dark:hover:bg-gray-800/50 dark:hover:text-primary-400">
               <span>{{ category.name }}</span>
               <span class="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 dark:bg-gray-800 dark:text-gray-300">
@@ -117,58 +117,61 @@
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { useSupabaseClient } from '#imports'
+import { useSupabaseClient, useRuntimeConfig } from '#imports'
 
-// Add new data structures
 interface BreakingNews {
-  title: string;
-  link: string;
+  title: string
+  link: string
 }
 
 interface PopularNews {
-  title: string;
-  image: string;
-  link: string;
-  category: string;
-  date: string;
+  title: string
+  image: string
+  link: string
+  category?: string
+  date: string
 }
 
 interface Category {
-  name: string;
-  link: string;
-  count: number;
+  id: string
+  name: string
+  slug: string
+  count: number
 }
 
-// Initialize Supabase client
+// Initialize Supabase client and config
 const supabase = useSupabaseClient()
+const config = useRuntimeConfig()
 
-// Add new reactive data
+// Add reactive data
+const loading = ref(false)
+const error = ref<string | null>(null)
 const breakingNews = ref<BreakingNews[]>([])
 const popularNews = ref<PopularNews[]>([])
 const categories = ref<Category[]>([])
-const loading = ref(true)
-const error = ref<string | null>(null)
 
 // Fetch breaking news
 const fetchBreakingNews = async () => {
   try {
     const { data, error: supaError } = await supabase
-      .from('posts')
-      .select('title, id')
-      .eq('is_breaking', true)
-      .order('created_at', { ascending: false })
-      .limit(3)
+      .from('news')
+      .select('title, short_id')
+      .eq('is_featured', true)
+      .eq('is_published', true)
+      .order('featured_position', { ascending: true })
+      .limit(4)
 
     if (supaError) throw supaError
 
     if (data) {
       breakingNews.value = data.map(item => ({
         title: item.title,
-        link: `/news/${item.id}`
+        link: `/news/${item.short_id}`
       }))
     }
   } catch (e: any) {
     console.error('Error fetching breaking news:', e)
+    error.value = 'Failed to load breaking news'
     breakingNews.value = []
   }
 }
@@ -177,8 +180,9 @@ const fetchBreakingNews = async () => {
 const fetchPopularNews = async () => {
   try {
     const { data, error: supaError } = await supabase
-      .from('posts')
-      .select('title, id, image_url, category, created_at')
+      .from('news')
+      .select('title, short_id, featured_image, category:categories(name), published_at')
+      .eq('is_published', true)
       .order('views', { ascending: false })
       .limit(3)
 
@@ -187,37 +191,58 @@ const fetchPopularNews = async () => {
     if (data) {
       popularNews.value = data.map(item => ({
         title: item.title,
-        image: item.image_url || '/placeholder-image.jpg',
-        link: `/news/${item.id}`,
-        category: item.category,
-        date: item.created_at
+        image: item.featured_image ? 
+          `${config.public.supabaseUrl}/storage/v1/object/public/xpost-files/${item.featured_image}` : 
+          '/placeholder-image.svg',
+        link: `/news/${item.short_id}`,
+        category: item.category?.name,
+        date: item.published_at
       }))
     }
   } catch (e: any) {
     console.error('Error fetching popular news:', e)
+    error.value = 'Failed to load popular news'
     popularNews.value = []
   }
 }
 
-// Fetch categories
+// Fetch categories with counts
 const fetchCategories = async () => {
   try {
-    const { data, error: categoriesError } = await supabase
+    // First get all categories
+    const { data: categoriesData, error: categoriesError } = await supabase
       .from('categories')
-      .select('name, slug')
+      .select('id, name, slug')
       .order('name')
 
     if (categoriesError) throw categoriesError
 
-    if (data) {
-      categories.value = data.map(item => ({
-        name: item.name,
-        link: `/category/${item.slug}`,
-        count: 0 // Default to 0 for now
-      }))
+    if (categoriesData) {
+      // Then get counts for each category
+      const categoriesWithCounts = await Promise.all(
+        categoriesData.map(async (category) => {
+          const { count, error: countError } = await supabase
+            .from('news')
+            .select('id', { count: 'exact', head: true })
+            .eq('category_id', category.id)
+            .eq('is_published', true)
+
+          if (countError) throw countError
+
+          return {
+            id: category.id,
+            name: category.name,
+            slug: `/category/${category.slug}`,
+            count: count || 0
+          }
+        })
+      )
+
+      categories.value = categoriesWithCounts
     }
   } catch (e: any) {
     console.error('Error fetching categories:', e)
+    error.value = 'Failed to load categories'
     categories.value = []
   }
 }

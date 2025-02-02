@@ -79,8 +79,18 @@
                       <div class="h-10 w-10 rounded-lg bg-gray-200 dark:bg-gray-700"></div>
                     </div>
                     <div class="ml-4">
-                      <div class="text-sm font-medium text-gray-900 dark:text-white">
-                        {{ news.title }}
+                      <div class="flex items-center gap-2">
+                        <div class="text-sm font-medium text-gray-900 dark:text-white">
+                          {{ news.title }}
+                        </div>
+                        <span :class="[
+                          'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
+                          news.is_published 
+                            ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                            : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                        ]">
+                          {{ news.is_published ? 'Нийтлэгдсэн' : 'Ноорог' }}
+                        </span>
                       </div>
                       <div class="text-sm text-gray-500 dark:text-gray-400">
                         {{ news.excerpt }}
@@ -138,7 +148,7 @@
                       <Edit class="w-5 h-5" />
                     </button>
                     <button 
-                      @click="deleteNews(news.id)"
+                      @click="$emit('delete-news', news.id)"
                       class="text-gray-400 hover:text-red-500 transition-colors duration-200"
                     >
                       <Trash2 class="w-5 h-5" />
@@ -180,7 +190,7 @@
               <div class="flex-1 min-w-0">
                 <div class="flex items-start justify-between gap-4">
                   <div>
-                    <div class="flex items-center gap-2">
+                    <div class="flex flex-wrap items-center gap-2">
                       <h3 class="text-sm font-medium text-gray-900 dark:text-white line-clamp-2">{{ news.title }}</h3>
                       <span v-if="news.is_featured" 
                             :class="[
@@ -191,6 +201,14 @@
                             ]">
                         <Star class="w-3 h-3 mr-1" />
                         {{ news.featured_position === 0 ? 'Том онцлох' : `Жижиг онцлох ${news.featured_position}` }}
+                      </span>
+                      <span :class="[
+                        'inline-flex items-center px-2 py-0.5 rounded text-xs font-medium',
+                        news.is_published 
+                          ? 'bg-green-100 text-green-800 dark:bg-green-900/20 dark:text-green-400'
+                          : 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/20 dark:text-yellow-400'
+                      ]">
+                        {{ news.is_published ? 'Нийтлэгдсэн' : 'Ноорог' }}
                       </span>
                     </div>
                     <p class="mt-1 text-sm text-gray-500 dark:text-gray-400 line-clamp-2">{{ news.excerpt }}</p>
@@ -217,9 +235,11 @@
                   <template v-if="!news.is_featured">
                     <button 
                       @click="$emit('set-featured-position', news, 0)"
-                      class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-yellow-700 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:hover:bg-yellow-900/40 transition-colors duration-200"
+                      class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-yellow-700 bg-yellow-100 hover:bg-yellow-200 dark:bg-yellow-900/20 dark:text-yellow-400 dark:hover:bg-yellow-900/40 transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                      :disabled="!news.is_published"
+                      :title="!news.is_published ? 'Ноорог мэдээг онцлох боломжгүй' : ''"
                     >
-                      <Star class="w-4 h-4 mr-1" />
+                      <Star class="w-4 h-4 mr-1.5" />
                       Том онцлох
                     </button>
                     <button 
@@ -252,7 +272,7 @@
                     Засах
                   </button>
                   <button
-                    @click="deleteNews(news.id)"
+                    @click="$emit('delete-news', news.id)"
                     class="inline-flex items-center px-3 py-1.5 text-xs font-medium rounded-lg text-red-700 bg-red-100 hover:bg-red-200 dark:bg-red-900/20 dark:text-red-400 dark:hover:bg-red-900/40 transition-colors duration-200"
                   >
                     <Trash2 class="w-4 h-4 mr-1" />
@@ -301,7 +321,7 @@ interface NewsArticle {
   featured_position?: number
   created_at: string
   updated_at: string
-  status: 'published' | 'draft' | 'archived'
+  is_published: boolean
   views: number
   shares: number
   likes: number
@@ -491,5 +511,28 @@ const getCategoryClasses = (category: string) => {
     rgba(31, 41, 55, 0.6) 37%, 
     rgba(31, 41, 55, 0.4) 63%
   );
+}
+.component-wrapper {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+/* For table layouts */
+.table-container {
+  overflow-x: auto;
+  max-width: 100%;
+}
+/* Add to components with tables */
+table {
+  width: 100%;
+  min-width: 600px; /* minimum width for readability */
+}
+
+/* For grid layouts */
+.grid-container {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 1rem;
 }
 </style>

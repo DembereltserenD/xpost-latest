@@ -3,7 +3,7 @@
     <div v-if="articles && articles.length > 0" class="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
       <!-- Main featured article (position 0) -->
       <div class="md:col-span-2 featured-article">
-        <NuxtLink :to="`/news/${mainArticle.id}`" class="block" v-if="mainArticle">
+        <NuxtLink :to="`/news/${mainArticle.short_id}`" class="block" v-if="mainArticle">
           <div class="relative overflow-hidden rounded-lg bg-gray-800">
             <div class="relative aspect-video md:h-[482.5px]">
               <img 
@@ -36,7 +36,7 @@
       <div class="md:col-span-1" v-if="smallArticles.length > 0">
         <div class="grid grid-cols-1 gap-4">
           <div v-for="article in smallArticles" :key="article.id" class="bg-gray-800 rounded-lg overflow-hidden">
-            <NuxtLink :to="`/news/${article.id}`" class="block">
+            <NuxtLink :to="`/news/${article.short_id}`" class="block">
               <div class="relative aspect-video md:h-[150px]">
                 <img 
                   :src="article.featured_image" 

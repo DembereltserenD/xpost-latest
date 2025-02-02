@@ -1,6 +1,6 @@
 <template>
   <NuxtLayout>
-    <div class="app-wrapper" :class="[colorMode.preference]">
+    <div class="app-wrapper bg-white dark:bg-[#0F1729]">
       <ClientOnly>
         <template v-if="!isAdminOrAuthRoute">
           <Ticker />
@@ -49,8 +49,10 @@ onMounted(() => {
   const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches
   const savedMode = localStorage.getItem('nuxt-color-mode')
   if (!savedMode) {
-    colorMode.preference = prefersDark ? 'dark' : 'system'
+    colorMode.preference = prefersDark ? 'dark' : 'light' // explicitly set to light instead of system
   }
+  // Ensure the value matches the preference
+  colorMode.value = colorMode.preference
 })
 
 const handleMenuToggle = (isOpen: boolean) => {
@@ -81,20 +83,19 @@ watch(() => colorMode.preference, (newValue) => {
   }
 }
 
-/* Reset default margins */
+/* Reset default margins and set dark mode colors */
 body {
   margin: 0;
   padding: 0;
+  @apply bg-white text-gray-900 dark:bg-[#0F1729] dark:text-white;
 }
 
 .app-wrapper {
   @apply min-h-screen flex flex-col;
-  @apply bg-background text-foreground;
+  @apply bg-white text-gray-900 dark:bg-[#0F1729] dark:text-white;
   margin: 0;
   padding: 0;
   position: relative;
-  background-color: hsl(var(--background));
-  color: hsl(var(--foreground));
 }
 
 .app-wrapper.menu-open {
@@ -103,42 +104,34 @@ body {
 }
 
 .main-content {
-  flex: 1;
+  @apply flex-grow;
+  min-height: calc(100vh - var(--header-height) - var(--ticker-height));
+  padding: var(--content-padding) 0;
 }
 
 .container-custom {
-  width: 100%;
+  @apply mx-auto px-4;
   max-width: var(--max-width);
-  margin: 0 auto;
-  padding-left: var(--content-padding);
-  padding-right: var(--content-padding);
-}
-
-/* Utility class for max-width container */
-.max-w-container {
   width: 100%;
-  max-width: var(--max-width);
-  margin: 0 auto;
-  padding-left: var(--content-padding);
-  padding-right: var(--content-padding);
 }
 
-/* Page Transitions */
-.page-enter-active,
-.page-leave-active {
-  transition: opacity 0.3s ease;
-}
+/* Dark mode scrollbar */
+@media (prefers-color-scheme: dark) {
+  ::-webkit-scrollbar {
+    width: 12px;
+  }
 
-.page-enter-from,
-.page-leave-to {
-  opacity: 0;
-}
+  ::-webkit-scrollbar-track {
+    @apply bg-gray-800;
+  }
 
-/* Reduce motion */
-@media (prefers-reduced-motion: reduce) {
-  .page-enter-active,
-  .page-leave-active {
-    transition: none;
+  ::-webkit-scrollbar-thumb {
+    @apply bg-gray-700;
+    border-radius: 6px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-gray-600;
   }
 }
 </style>

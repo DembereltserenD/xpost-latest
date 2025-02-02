@@ -43,12 +43,42 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Зургийн URL</label>
-              <input
-                v-model="form.featured_image"
-                type="url"
-                class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-blue-500 focus:ring-blue-500 dark:bg-gray-700 dark:border-gray-600 dark:text-white"
-              />
+              <label class="block text-sm font-medium text-gray-700 dark:text-gray-300">Зураг</label>
+              <div class="mt-1 flex items-center space-x-4">
+                <div v-if="form.featured_image" class="relative w-32 h-32">
+                  <img :src="form.featured_image" alt="Preview" class="w-full h-full object-cover rounded-lg" />
+                  <button
+                    @click="removeImage"
+                    class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full p-1 hover:bg-red-600"
+                  >
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+                    </svg>
+                  </button>
+                </div>
+                <div class="flex-1">
+                  <input
+                    type="file"
+                    ref="fileInput"
+                    @change="handleImageUpload"
+                    accept="image/*"
+                    class="hidden"
+                  />
+                  <button
+                    type="button"
+                    @click="$refs.fileInput.click()"
+                    class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-md shadow-sm text-sm font-medium text-gray-700 dark:text-gray-300 bg-white dark:bg-gray-700 hover:bg-gray-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                  >
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" />
+                    </svg>
+                    Зураг сонгох
+                  </button>
+                  <p class="mt-2 text-sm text-gray-500 dark:text-gray-400">
+                    PNG, JPG, GIF файлууд дэмжигдэнэ
+                  </p>
+                </div>
+              </div>
             </div>
 
             <div>
@@ -93,7 +123,6 @@
                 >
                   <option value="draft">Ноорог</option>
                   <option value="published">Нийтлэх</option>
-                  <option value="archived">Архивлах</option>
                 </select>
               </div>
             </div>
@@ -128,14 +157,18 @@ definePageMeta({
 
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
-import { useSupabaseUser } from '#imports'
-import { getCategories, createNewsArticle } from '~/lib/supabaseClient'
+import { useSupabaseUser, useNuxtApp } from '#imports'
+import { getCategories } from '~/lib/supabaseClient'
+import { useNewsStore } from '~/stores/news'
 
 const router = useRouter()
 const user = useSupabaseUser()
+const { $storage, $supabase } = useNuxtApp()
+const newsStore = useNewsStore()
 const categories = ref([])
 const error = ref(null)
 const loading = ref(false)
+const fileInput = ref(null)
 
 const form = ref({
   title: '',
@@ -156,32 +189,135 @@ const generateSlug = (title: string) => {
     .replace(/(^-|-$)/g, '')
 }
 
+const generateShortId = () => {
+  // Generate a short, readable ID (6 characters)
+  const characters = 'abcdefghijklmnopqrstuvwxyz0123456789';
+  let result = '';
+  for (let i = 0; i < 6; i++) {
+    // Ensure first character is a letter
+    if (i === 0) {
+      result += characters.slice(0, 26).charAt(Math.floor(Math.random() * 26));
+    } else {
+      result += characters.charAt(Math.floor(Math.random() * characters.length));
+    }
+  }
+  return result;
+}
+
+const handleImageUpload = async (event: Event) => {
+  const file = (event.target as HTMLInputElement).files?.[0]
+  if (!file) return
+
+  try {
+    loading.value = true
+    const path = `news/images/${Date.now()}-${file.name}`
+    
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      throw new Error('Please upload an image file')
+    }
+    
+    // Validate file size (max 5MB)
+    if (file.size > 5 * 1024 * 1024) {
+      throw new Error('Image size should be less than 5MB')
+    }
+
+    const { publicUrl } = await $storage.uploadFile(file, path, {
+      visibility: 'public',
+      cacheControl: '3600'
+    })
+
+    form.value.featured_image = publicUrl
+  } catch (err: any) {
+    console.error('Image upload error:', err)
+    error.value = err?.message || 'Failed to upload image. Please try again.'
+  } finally {
+    loading.value = false
+  }
+}
+
+const removeImage = async () => {
+  if (!form.value.featured_image) return
+
+  try {
+    loading.value = true
+    const url = new URL(form.value.featured_image)
+    const pathParts = url.pathname.split('/')
+    const bucket = pathParts[2] // Assuming URL format: /storage/v1/bucket/path
+    const path = pathParts.slice(3).join('/') // Get everything after bucket
+    
+    await $storage.deleteFile(path, { bucket })
+    form.value.featured_image = ''
+  } catch (err: any) {
+    console.error('Image removal error:', err)
+    error.value = err?.message || 'Failed to remove image. Please try again.'
+  } finally {
+    loading.value = false
+  }
+}
+
 const createNews = async () => {
   try {
     loading.value = true
-    error.value = null
 
-    if (!form.value.category_id) {
-      throw new Error('Ангилал сонгоно уу')
+    // Validate required fields for published articles
+    if (form.value.status === 'published') {
+      if (!form.value.title?.trim()) {
+        throw new Error('Title is required for published articles')
+      }
+      if (!form.value.content?.trim()) {
+        throw new Error('Content is required for published articles')
+      }
+      if (!form.value.category_id) {
+        throw new Error('Category is required for published articles')
+      }
+    }
+
+    const slug = generateSlug(form.value.title)
+    const short_id = generateShortId()
+
+    // Always validate short_id
+    if (!short_id) {
+      throw new Error('Failed to generate a valid short ID')
+    }
+
+    // Check for existing short_id
+    const { data: existingNews, error: checkError } = await $supabase
+      .from('news')
+      .select('id, short_id')
+      .eq('short_id', short_id)
+      .maybeSingle()
+
+    if (checkError) throw checkError
+
+    // If short_id exists, try again
+    if (existingNews) {
+      loading.value = false
+      return createNews()
     }
 
     const newsData = {
-      ...form.value,
-      slug: generateSlug(form.value.title),
-      author_id: user.value?.id,
-      user_id: user.value?.id,
-      views: 0,
-      shares: 0,
-      likes: 0,
+      title: form.value.title,
+      slug,
+      short_id, // Always include short_id
+      content: form.value.content,
+      excerpt: form.value.excerpt,
+      featured_image: form.value.featured_image,
+      category_id: form.value.category_id,
+      is_published: form.value.status === 'published',
       is_featured: false,
-      is_published: false,
-      published_at: null,
-      featured_position: null
+      featured_position: null,
+      published_at: form.value.status === 'published' ? new Date().toISOString() : null,
+      user_id: user.value?.id
     }
 
-    await createNewsArticle(newsData)
+    const { error: insertError } = await $supabase.from('news').insert([newsData])
+    if (insertError) throw insertError
+
+    newsStore.initialized = false
+    await newsStore.init()
     router.push('/admin/news')
-  } catch (err) {
+  } catch (err: any) {
     error.value = err.message || 'Мэдээ үүсгэхэд алдаа гарлаа'
     console.error('Error creating news:', err)
   } finally {

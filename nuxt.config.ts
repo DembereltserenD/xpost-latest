@@ -14,6 +14,14 @@ export default defineNuxtConfig({
     layoutTransition: false,
   },
 
+  runtimeConfig: {
+    public: {
+      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
+      supabaseKey: process.env.NUXT_PUBLIC_SUPABASE_KEY,
+      tinymceApiKey: process.env.TINYMCE_API_KEY,
+    },
+  },
+
   modules: [
     "@nuxtjs/tailwindcss",
     "@nuxtjs/color-mode",
@@ -39,12 +47,14 @@ export default defineNuxtConfig({
   },
 
   colorMode: {
-    classSuffix: "",
-    preference: "light",
-    fallback: "light",
-    dataValue: "theme",
-    storageKey: "nuxt-color-mode",
-    classPrefix: "",
+    classSuffix: '',
+    preference: 'dark',
+    fallback: 'dark',
+    hid: 'nuxt-color-mode-script',
+    globalName: '__NUXT_COLOR_MODE__',
+    componentName: 'ColorScheme',
+    classPrefix: '',
+    storageKey: 'nuxt-color-mode'
   },
 
   i18n: {
@@ -59,14 +69,6 @@ export default defineNuxtConfig({
         file: 'mn.json'
       }
     ]
-  },
-
-  runtimeConfig: {
-    public: {
-      supabaseUrl: process.env.NUXT_PUBLIC_SUPABASE_URL,
-      supabaseKey: process.env.NUXT_PUBLIC_SUPABASE_KEY,
-      tinymceApiKey: process.env.TINYMCE_API_KEY,
-    },
   },
 
   nitro: {

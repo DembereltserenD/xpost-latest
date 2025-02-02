@@ -1,138 +1,133 @@
-<template>
-  <header class="header">
-    <div class="container max-w-container header-content" :class="{ 'menu-open': isMenuOpen }">
-      <!-- Logo -->
-      <div class="logo-wrapper">
-        <NuxtLink to="/" class="logo">
-          <img src="/images/logo.svg" alt="xpost.mn logo" class="h-full w-auto max-w-[120px] sm:max-w-[150px]">
-        </NuxtLink>
-      </div>
-      
-      <!-- Navigation (desktop only) -->
-      <div class="nav-wrapper hidden lg:block">
-        <Navigation :is-menu-open="isMenuOpen" @close="closeMenu" />
-      </div>
-      
-      <!-- Additional Info -->
-      <div class="right-content">
-        <InfoLinks class="hidden lg:flex" :is-menu-open="isMenuOpen" @close="closeMenu" />
-        <div class="divider hidden lg:block"></div>
-        <ColorModeToggle />
-        <MobileMenuButton class="block lg:hidden" :is-active="isMenuOpen" @click="toggleMenu" />
-      </div>
-    </div>
 
-    <!-- Mobile Menu Overlay -->
-    <div 
+<template>
+  <header class="header-wrapper">
+    <nav class="header-nav">
+      <div class="header-container">
+        <!-- Logo and Site Name -->
+        <div class="flex-shrink-0">
+          <NuxtLink to="/" class="flex items-center h-10">
+            <template v-if="logoUrl">
+              <img 
+                :src="logoUrl"
+                :key="settings?.logo_url"
+                :style="{
+                  width: 'auto',
+                  height: '40px',
+                  objectFit: 'contain'
+                }"
+                class="object-contain"
+                :alt="settings?.sitename || 'Site Logo'"
+                @error="handleImageError"
+              />
+            </template>
+            <span v-else class="text-xl font-bold text-gray-900 dark:text-white">
+              {{ settings?.sitename || 'Xpost.mn' }}
+            </span>
+          </NuxtLink>
+        </div>
+
+        <!-- Navigation (desktop only) -->
+        <div class="nav-wrapper hidden lg:block">
+          <Navigation :is-menu-open="isMenuOpen" @close="closeMenu" />
+        </div>
+        
+        <!-- Additional Info -->
+        <div class="flex-shrink-0 flex items-center">
+          <InfoLinks class="hidden lg:flex font-bold" :is-menu-open="isMenuOpen" @close="closeMenu" />
+          <div class="divider hidden lg:block"></div>
+          <ColorModeToggle />
+          <MobileMenuButton class="block lg:hidden" :is-active="isMenuOpen" @click="toggleMenu" />
+        </div>
+      </div>
+    </nav>
+
+    <!-- Mobile Menu -->
+    <MobileMenuContent 
       v-if="isMenuOpen" 
-      class="mobile-menu-overlay"
-      :style="{
-        background: $colorMode.value === 'dark' ? 'rgb(0, 0, 0)' : 'rgb(255, 255, 255)'
-      }"
-    >
-      <MobileMenuContent @close="closeMenu" />
-    </div>
+      class="lg:hidden"
+      :is-menu-open="isMenuOpen"
+      @close="closeMenu"
+    />
   </header>
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
-import ColorModeToggle from '~/components/ColorModeToggle.vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import Navigation from './header/Navigation.vue'
 import InfoLinks from './header/InfoLinks.vue'
+import ColorModeToggle from './ColorModeToggle.vue'
 import MobileMenuButton from './header/MobileMenuButton.vue'
 import MobileMenuContent from './MobileMenuContent.vue'
+import { useSettings } from '~/composables/useSettings'
 
 const isMenuOpen = ref(false)
-const emit = defineEmits(['menu-toggle'])
+const { settings, getPublicUrl, fetchSettings, subscribeToSettings } = useSettings()
 
-function toggleMenu() {
+const logoUrl = computed(() => {
+  if (!settings.value?.logo_url) return null
+  const url = getPublicUrl(settings.value.logo_url)
+  console.log('Logo URL:', url) // Debug log
+  return url
+})
+
+const handleImageError = (e: Event) => {
+  const img = e.target as HTMLImageElement
+  console.error('Failed to load logo image:', {
+    src: img.src,
+    originalUrl: settings.value?.logo_url,
+    computedUrl: logoUrl.value
+  })
+}
+
+const toggleMenu = () => {
   isMenuOpen.value = !isMenuOpen.value
-  emit('menu-toggle', isMenuOpen.value)
 }
 
-function closeMenu() {
+const closeMenu = () => {
   isMenuOpen.value = false
-  emit('menu-toggle', false)
 }
+
+// Initialize settings
+onMounted(async () => {
+  console.log('Header mounted, fetching settings...')
+  await fetchSettings()
+  const unsubscribe = subscribeToSettings()
+  onUnmounted(() => {
+    unsubscribe()
+  })
+})
 </script>
 
 <style scoped>
-.header {
-  @apply relative z-50;
-  @apply bg-white dark:bg-background;
-  @apply border-b border-gray-100 dark:border-gray-800;
+.header-wrapper {
+  @apply w-full relative z-50;
+  @apply bg-white dark:bg-[#0F1729];
   height: var(--header-height);
-  margin: 0;
-  padding: 0;
-  display: flex;
-  align-items: center;
-  width: 100%;
-  overflow-x: hidden;
 }
 
-.header-content {
+.header-nav {
+  @apply h-full border-b border-gray-200 dark:border-gray-800;
+}
+
+.header-container {
+  @apply container mx-auto h-full px-4;
   @apply flex items-center justify-between;
-  @apply w-full;
-  height: 100%;
-  margin: 0 auto;
-  padding: 0 var(--content-padding);
-}
-
-.logo-wrapper {
-  @apply relative z-10 flex-shrink-0;
-  height: 32px;
-}
-
-.logo {
-  @apply block transition-all duration-300 hover:opacity-90;
-  height: 100%;
-  transform-origin: left center;
-}
-
-.logo:hover {
-  transform: scale(1.05);
-  filter: drop-shadow(0 0 8px rgba(var(--color-primary-rgb), 0.3));
-}
-
-.nav-wrapper {
-  @apply flex-1 mx-4;
-}
-
-.right-content {
-  @apply flex items-center gap-2 sm:gap-4;
-  & > * {
-    @apply transition-transform duration-200;
-  }
-  
-  & > *:hover {
-    transform: translateY(-2px);
-  }
+  max-width: 1200px;
 }
 
 .divider {
-  @apply w-px h-6 bg-border mx-2;
+  @apply w-px h-6 mx-4;
+  @apply bg-gray-200 dark:bg-gray-700;
 }
 
+/* Mobile menu styles */
 .mobile-menu-overlay {
   @apply fixed inset-0 z-50;
-  height: calc(100vh - var(--header-height) - var(--ticker-height));
+  @apply bg-white dark:bg-[#0F1729];
 }
 
-/* Mobile styles */
-@media (max-width: 1023px) {
-  .header-content.menu-open {
-    @apply px-0;
-  }
-  
-  .divider {
-    @apply hidden;
-  }
-}
-
-/* Ensure no horizontal scroll */
+/* Make all text in header bold */
 :deep(*) {
-  max-width: 100vw;
-  word-wrap: break-word;
+  @apply font-bold;
 }
 </style>

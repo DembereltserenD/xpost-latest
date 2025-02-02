@@ -7,6 +7,7 @@ export interface Article {
   id: string
   title: string
   slug: string
+  short_id?: string
   content: string
   excerpt: string
   featured_image: string | null
@@ -76,6 +77,7 @@ export const useNewsStore = defineStore('news', {
           id: article.id,
           title: article.title,
           slug: article.slug,
+          short_id: article.short_id,
           content: article.content,
           excerpt: article.excerpt || '',
           category_id: article.category_id,
@@ -89,7 +91,7 @@ export const useNewsStore = defineStore('news', {
           featured_image: article.featured_image?.startsWith('data:') ? 
             article.featured_image : 
             article.featured_image ? 
-              `${this.config.public.supabaseUrl}/storage/v1/object/public/news/${article.featured_image}` : 
+              `${this.config.public.supabaseUrl}/storage/v1/object/public/xpost-files/${article.featured_image}` : 
               '/placeholder-image.svg'
         }))
 
@@ -113,6 +115,7 @@ export const useNewsStore = defineStore('news', {
           .from('news')
           .select('*, category:categories(*)')
           .eq('is_featured', true)
+          .eq('is_published', true)
           .order('featured_position', { ascending: true })
           .limit(4)
 
@@ -126,48 +129,11 @@ export const useNewsStore = defineStore('news', {
           return (a.featured_position ?? 99) - (b.featured_position ?? 99)
         })
 
-        // Debug log
-        console.log('Онцлох мэдээнүүд:', sortedData.map(a => ({
-          title: a.title,
-          position: a.featured_position,
-          is_featured: a.is_featured
-        })))
-
         this.featuredArticles = sortedData.map((article: any) => ({
-          ...article,
-          excerpt: article.excerpt || '',
-          likes: article.likes || 0,
-          comments: article.comments || 0,
-          liked: false,
-          featured_image: article.featured_image?.startsWith('data:') ? 
-            article.featured_image :
-            article.featured_image ? 
-              `${this.config.public.supabaseUrl}/storage/v1/object/public/news/${article.featured_image}` :
-              '/placeholder-image.svg'
-        }))
-      } catch (error) {
-        console.error('Онцлох мэдээ татахад алдаа гарлаа:', error)
-        this.error = error instanceof Error ? error.message : 'Онцлох мэдээ татахад алдаа гарлаа'
-      }
-    },
-
-    async getArticleBySlug(slug: string) {
-      try {
-        const { data: article, error } = await this.supabase
-          .from('news')
-          .select('*, category:categories(*)')
-          .eq('slug', slug)
-          .single()
-
-        if (error) throw error
-
-        // Increment view count
-        await this.incrementViews(article.id)
-
-        return {
           id: article.id,
           title: article.title,
           slug: article.slug,
+          short_id: article.short_id,
           content: article.content,
           excerpt: article.excerpt || '',
           category_id: article.category_id,
@@ -178,15 +144,53 @@ export const useNewsStore = defineStore('news', {
           comments: 0,
           liked: false,
           category: article.category,
+          featured_position: article.featured_position,
           featured_image: article.featured_image?.startsWith('data:') ? 
             article.featured_image : 
             article.featured_image ? 
-              `${this.config.public.supabaseUrl}/storage/v1/object/public/news/${article.featured_image}` : 
+              `${this.config.public.supabaseUrl}/storage/v1/object/public/xpost-files/${article.featured_image}` : 
               '/placeholder-image.svg'
+        }))
+      } catch (error) {
+        console.error('Error fetching featured articles:', error)
+        this.error = 'Failed to fetch featured articles'
+      }
+    },
+
+    async getArticleBySlug(slug: string) {
+      try {
+        const { data, error } = await this.supabase
+          .from('news')
+          .select('*, category:categories(*)')
+          .or(`slug.eq.${slug},short_id.eq.${slug}`)
+          .single()
+
+        if (error) throw error
+
+        return {
+          id: data.id,
+          title: data.title,
+          slug: data.slug,
+          short_id: data.short_id,
+          content: data.content,
+          excerpt: data.excerpt || '',
+          category_id: data.category_id,
+          created_at: data.created_at,
+          published_at: data.published_at,
+          updated_at: data.updated_at,
+          category: data.category,
+          featured_image: data.featured_image?.startsWith('data:') ? 
+            data.featured_image : 
+            data.featured_image ? 
+              `${this.config.public.supabaseUrl}/storage/v1/object/public/xpost-files/${data.featured_image}` : 
+              '/placeholder-image.svg',
+          likes: 0,
+          comments: 0,
+          liked: false
         }
       } catch (error) {
         console.error('Мэдээ татахад алдаа гарлаа:', error)
-        throw error
+        return null
       }
     },
 
